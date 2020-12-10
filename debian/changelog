@@ -1,3 +1,12 @@
+libfprint (1:1.90.6+tod1-0ubuntu2) UNRELEASED; urgency=medium
+
+  * d/p/meson-Do-not-support-drivers-known-to-fail-in-Big-Endian-.patch:
+    - Do not enable drivers that are not supported by big endian archs
+      Upstream patch to only build drivers everywhere but not include them
+      in the supported list or test them
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 10 Dec 2020 21:36:31 +0100
+
 libfprint (1:1.90.6+tod1-0ubuntu1) hirsute; urgency=medium
 
   * New upstream release
