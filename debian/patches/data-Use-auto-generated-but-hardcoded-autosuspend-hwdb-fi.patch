@@ -1,0 +1,437 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Wed, 20 Jan 2021 20:02:05 +0100
+Subject: data: Use auto-generated but hardcoded autosuspend hwdb file
+
+This solves various problems:
+ 1. It stays the same also if some drivers have been disabled
+ 2. It uses a stable path for being imported by systemd
+ 3. It is still checked for its validity by tests
+ 4. It can be auto-generated using a simple command
+---
+ data/autosuspend.hwdb             | 262 ++++++++++++++++++++++++++++++++++++++
+ data/meson.build                  |   9 ++
+ libfprint/fprint-list-udev-hwdb.c |   5 +
+ libfprint/meson.build             |  24 ++--
+ meson.build                       |  12 ++
+ tests/meson.build                 |   5 +-
+ tests/test-generated-hwdb.sh      |  24 ++++
+ 7 files changed, 332 insertions(+), 9 deletions(-)
+ create mode 100644 data/autosuspend.hwdb
+ create mode 100644 data/meson.build
+ create mode 100755 tests/test-generated-hwdb.sh
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+new file mode 100644
+index 0000000..f22d16a
+--- /dev/null
++++ b/data/autosuspend.hwdb
+@@ -0,0 +1,262 @@
++# This file has been generated using fprint-list-udev-hwdb with all drivers enabled
++
++# Supported by libfprint driver upektc_img
++usb:v147Ep2016*
++usb:v147Ep2020*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver vfs5011
++usb:v138Ap0010*
++usb:v138Ap0011*
++usb:v138Ap0015*
++usb:v138Ap0017*
++usb:v138Ap0018*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver aes3500
++usb:v08FFp5731*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver aes4000
++usb:v5501p08FF*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver aes1610
++usb:v08FFp1600*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver aes1660
++usb:v08FFp1660*
++usb:v08FFp1680*
++usb:v08FFp1681*
++usb:v08FFp1682*
++usb:v08FFp1683*
++usb:v08FFp1684*
++usb:v08FFp1685*
++usb:v08FFp1686*
++usb:v08FFp1687*
++usb:v08FFp1688*
++usb:v08FFp1689*
++usb:v08FFp168A*
++usb:v08FFp168B*
++usb:v08FFp168C*
++usb:v08FFp168D*
++usb:v08FFp168E*
++usb:v08FFp168F*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver aes2660
++usb:v08FFp2660*
++usb:v08FFp2680*
++usb:v08FFp2681*
++usb:v08FFp2682*
++usb:v08FFp2683*
++usb:v08FFp2684*
++usb:v08FFp2685*
++usb:v08FFp2686*
++usb:v08FFp2687*
++usb:v08FFp2688*
++usb:v08FFp2689*
++usb:v08FFp268A*
++usb:v08FFp268B*
++usb:v08FFp268C*
++usb:v08FFp268D*
++usb:v08FFp268E*
++usb:v08FFp268F*
++usb:v08FFp2691*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver aes2501
++usb:v08FFp2500*
++usb:v08FFp2580*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver aes2550
++usb:v08FFp2550*
++usb:v08FFp2810*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver vfs101
++usb:v138Ap0001*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver vfs301
++usb:v138Ap0005*
++usb:v138Ap0008*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver vfs0050
++usb:v138Ap0050*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver etes603
++usb:v1C7Ap0603*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver vcom5s
++usb:v061Ap0110*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver synaptics
++usb:v06CBp00BD*
++usb:v06CBp00E9*
++usb:v06CBp00DF*
++usb:v06CBp00F9*
++usb:v06CBp00FC*
++usb:v06CBp00C2*
++usb:v06CBp00C9*
++usb:v06CBp00E7*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver elan
++usb:v04F3p0903*
++usb:v04F3p0907*
++usb:v04F3p0C01*
++usb:v04F3p0C02*
++usb:v04F3p0C03*
++usb:v04F3p0C04*
++usb:v04F3p0C05*
++usb:v04F3p0C06*
++usb:v04F3p0C07*
++usb:v04F3p0C08*
++usb:v04F3p0C09*
++usb:v04F3p0C0A*
++usb:v04F3p0C0B*
++usb:v04F3p0C0C*
++usb:v04F3p0C0D*
++usb:v04F3p0C0E*
++usb:v04F3p0C0F*
++usb:v04F3p0C10*
++usb:v04F3p0C11*
++usb:v04F3p0C12*
++usb:v04F3p0C13*
++usb:v04F3p0C14*
++usb:v04F3p0C15*
++usb:v04F3p0C16*
++usb:v04F3p0C17*
++usb:v04F3p0C18*
++usb:v04F3p0C19*
++usb:v04F3p0C1A*
++usb:v04F3p0C1B*
++usb:v04F3p0C1C*
++usb:v04F3p0C1D*
++usb:v04F3p0C1E*
++usb:v04F3p0C1F*
++usb:v04F3p0C20*
++usb:v04F3p0C21*
++usb:v04F3p0C22*
++usb:v04F3p0C23*
++usb:v04F3p0C24*
++usb:v04F3p0C25*
++usb:v04F3p0C26*
++usb:v04F3p0C27*
++usb:v04F3p0C28*
++usb:v04F3p0C29*
++usb:v04F3p0C2A*
++usb:v04F3p0C2B*
++usb:v04F3p0C2C*
++usb:v04F3p0C2D*
++usb:v04F3p0C2E*
++usb:v04F3p0C2F*
++usb:v04F3p0C30*
++usb:v04F3p0C31*
++usb:v04F3p0C32*
++usb:v04F3p0C33*
++usb:v04F3p0C42*
++usb:v04F3p0C4D*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver uru4000
++usb:v045Ep00BC*
++usb:v045Ep00BD*
++usb:v045Ep00CA*
++usb:v05BAp0007*
++usb:v05BAp0008*
++usb:v05BAp000A*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver upektc
++usb:v0483p2015*
++usb:v147Ep3001*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver upeksonly
++usb:v147Ep1000*
++usb:v147Ep1001*
++ ID_AUTOSUSPEND=1
++
++# Supported by libfprint driver goodixmoc
++usb:v27C6p5840*
++usb:v27C6p6496*
++usb:v27C6p60A2*
++usb:v27C6p63AC*
++usb:v27C6p639C*
++ ID_AUTOSUSPEND=1
++
++# Known unsupported devices
++usb:v04F3p036B*
++usb:v04F3p0C00*
++usb:v04F3p0C4B*
++usb:v04F3p0C4C*
++usb:v04F3p0C4F*
++usb:v04F3p0C57*
++usb:v04F3p2706*
++usb:v06CBp0081*
++usb:v06CBp0088*
++usb:v06CBp008A*
++usb:v06CBp009A*
++usb:v06CBp009B*
++usb:v06CBp00A2*
++usb:v06CBp00B7*
++usb:v06CBp00BB*
++usb:v06CBp00BE*
++usb:v06CBp00CB*
++usb:v06CBp00D8*
++usb:v06CBp00DA*
++usb:v0A5Cp5801*
++usb:v0A5Cp5805*
++usb:v0A5Cp5834*
++usb:v0A5Cp5843*
++usb:v10A5p0007*
++usb:v1188p9545*
++usb:v138Ap0007*
++usb:v138Ap003A*
++usb:v138Ap003C*
++usb:v138Ap003D*
++usb:v138Ap003F*
++usb:v138Ap0090*
++usb:v138Ap0091*
++usb:v138Ap0092*
++usb:v138Ap0094*
++usb:v138Ap0097*
++usb:v138Ap009D*
++usb:v138Ap00AB*
++usb:v147Ep1002*
++usb:v1491p0088*
++usb:v16D1p1027*
++usb:v1C7Ap0300*
++usb:v1C7Ap0570*
++usb:v1C7Ap0575*
++usb:v27C6p5042*
++usb:v27C6p5110*
++usb:v27C6p5117*
++usb:v27C6p5201*
++usb:v27C6p521D*
++usb:v27C6p5301*
++usb:v27C6p530C*
++usb:v27C6p532D*
++usb:v27C6p533C*
++usb:v27C6p5381*
++usb:v27C6p5385*
++usb:v27C6p538C*
++usb:v27C6p538D*
++usb:v27C6p5395*
++usb:v27C6p5584*
++usb:v27C6p55A2*
++usb:v27C6p55A4*
++usb:v27C6p55B4*
++usb:v27C6p5740*
++usb:v2808p9338*
++usb:v298Dp2033*
++usb:v3538p0930*
++ ID_AUTOSUSPEND=1
+diff --git a/data/meson.build b/data/meson.build
+new file mode 100644
+index 0000000..975c1c3
+--- /dev/null
++++ b/data/meson.build
+@@ -0,0 +1,9 @@
++if get_option('udev_rules')
++    # This file has to be updated using
++    # ninja -C <builddir> libfprint/sync-udev-hwdb
++
++    install_data('autosuspend.hwdb',
++        rename: '60-autosuspend-@0@.hwdb'.format(meson.project_name()),
++        install_dir: udev_hwdb_dir,
++    )
++endif
+diff --git a/libfprint/fprint-list-udev-hwdb.c b/libfprint/fprint-list-udev-hwdb.c
+index b687085..630be0f 100644
+--- a/libfprint/fprint-list-udev-hwdb.c
++++ b/libfprint/fprint-list-udev-hwdb.c
+@@ -168,8 +168,13 @@ int
+ main (int argc, char **argv)
+ {
+   g_autoptr(GArray) drivers = fpi_get_driver_types ();
++  g_autofree char *program_name = NULL;
+   guint i;
+ 
++  program_name = g_path_get_basename (argv[0]);
++  g_print ("# This file has been generated using %s with all drivers enabled\n",
++           program_name);
++
+   printed = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+ 
+   for (i = 0; i < drivers->len; i++)
+diff --git a/libfprint/meson.build b/libfprint/meson.build
+index abf2fb9..110c458 100644
+--- a/libfprint/meson.build
++++ b/libfprint/meson.build
+@@ -301,16 +301,24 @@ udev_hwdb = executable('fprint-list-udev-hwdb',
+     link_with: libfprint_drivers,
+     install: false)
+ 
+-# We always build this file; primarily so that systemd can pull it
+-# from the artefacts!
+-custom_target('udev-rules',
+-    output: '60-autosuspend-@0@.hwdb'.format(meson.project_name()),
++udev_hwdb_generator = custom_target('udev-hwdb',
++    output: 'autosuspend.hwdb',
++    depend_files: drivers_sources,
+     capture: true,
+     command: [ udev_hwdb ],
+-    install: get_option('udev_rules'),
+-    install_dir: udev_hwdb_dir,
+-    build_by_default: true
+-    )
++    install: false,
++)
++
++custom_target('sync-udev-hwdb',
++    depends: udev_hwdb_generator,
++    output: 'sync-udev-hwdb',
++    install: false,
++    command: [
++        'cp', '-v',
++        udev_hwdb_generator.full_path(),
++        meson.source_root() / 'data'
++    ]
++)
+ 
+ supported_devices = executable('fprint-list-supported-devices',
+     'fprint-list-supported-devices.c',
+diff --git a/meson.build b/meson.build
+index db619d7..415f27e 100644
+--- a/meson.build
++++ b/meson.build
+@@ -136,6 +136,18 @@ if drivers.length() == 0 or drivers[0] == ''
+     error('Cannot build libfprint without drivers, please specify a valid value for the drivers option')
+ endif
+ 
++if drivers == all_drivers or drivers == default_drivers
++    default_drivers_are_enabled = true
++else
++    default_drivers_are_enabled = true
++    foreach driver: default_drivers
++        if driver not in drivers
++            default_drivers_are_enabled = false
++            break
++        endif
++    endforeach
++endif
++
+ nss_dep = dependency('', required: false)
+ imaging_dep = dependency('', required: false)
+ libfprint_conf.set10('HAVE_PIXMAN', false)
+diff --git a/tests/meson.build b/tests/meson.build
+index 4ebf3b7..8e24980 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -5,6 +5,7 @@ envs.set('G_MESSAGES_DEBUG', 'all')
+ 
+ # Setup paths
+ envs.set('MESON_SOURCE_ROOT', meson.source_root())
++envs.set('MESON_BUILD_ROOT', meson.build_root())
+ envs.prepend('LD_LIBRARY_PATH', join_paths(meson.build_root(), 'libfprint'))
+ 
+ # Set FP_DEVICE_EMULATION so that drivers can adapt (e.g. to use fixed
+@@ -170,8 +171,10 @@ foreach test_name: unit_tests
+ endforeach
+ 
+ # Run udev rule generator with fatal warnings
++envs.set('UDEV_HWDB', udev_hwdb.full_path())
++envs.set('UDEV_HWDB_CHECK_CONTENTS', default_drivers_are_enabled ? '1' : '0')
+ test('udev-hwdb',
+-     udev_hwdb,
++     find_program('test-generated-hwdb.sh'),
+      env: envs)
+ 
+ gdb = find_program('gdb', required: false)
+diff --git a/tests/test-generated-hwdb.sh b/tests/test-generated-hwdb.sh
+new file mode 100755
+index 0000000..34209cb
+--- /dev/null
++++ b/tests/test-generated-hwdb.sh
+@@ -0,0 +1,24 @@
++#!/usr/bin/env bash
++set -e
++
++[ -x "$UDEV_HWDB" ] || exit 1
++
++if [ "$UDEV_HWDB_CHECK_CONTENTS" == 1 ]; then
++    generated_rules=$(mktemp "${TMPDIR:-/tmp}/libfprint-XXXXXX.hwdb")
++else
++    generated_rules=/dev/null
++fi
++
++$UDEV_HWDB > "$generated_rules"
++
++if [ "$UDEV_HWDB_CHECK_CONTENTS" != 1 ]; then
++    exit 77
++fi
++
++if ! cmp "$MESON_SOURCE_ROOT/data/autosuspend.hwdb" "$generated_rules"; then
++    echo "E: Autosuspend file needs to be re-generated!"
++    echo "   ninja -C $MESON_BUILD_ROOT libfprint/sync-udev-hwdb"
++    exit 1
++fi
++
++rm "$generated_rules"

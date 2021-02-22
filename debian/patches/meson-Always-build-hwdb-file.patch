@@ -1,0 +1,59 @@
+From: Benjamin Berg <bberg@redhat.com>
+Date: Tue, 19 Jan 2021 14:19:10 +0100
+Subject: meson: Always build hwdb file
+
+We want systemd to pull our hwdb. In order to ease this, always build
+the hwdb file, even if it is disabled.
+
+Once systemd has merged the rules, downstream should turn off the rules
+in libfprint. The default in libfprint will also be changed to not build
+the hwdb (udev_rules option) eventually.
+
+Origin: https://gitlab.freedesktop.org/libfprint/libfprint/-/commit/cbce56c1
+---
+ libfprint/meson.build | 18 ++++++++++--------
+ meson.build           |  2 ++
+ 2 files changed, 12 insertions(+), 8 deletions(-)
+
+diff --git a/libfprint/meson.build b/libfprint/meson.build
+index e385ce8..3464bf3 100644
+--- a/libfprint/meson.build
++++ b/libfprint/meson.build
+@@ -301,14 +301,16 @@ udev_hwdb = executable('fprint-list-udev-hwdb',
+     link_with: libfprint_drivers,
+     install: false)
+ 
+-if get_option('udev_rules')
+-    custom_target('udev-rules',
+-        output: '60-autosuspend-@0@.hwdb'.format(versioned_libname),
+-        capture: true,
+-        command: [ udev_hwdb ],
+-        install: true,
+-        install_dir: udev_hwdb_dir)
+-endif
++# We always build this file; primarily so that systemd can pull it
++# from the artefacts!
++custom_target('udev-rules',
++    output: '60-autosuspend-@0@.hwdb'.format(versioned_libname),
++    capture: true,
++    command: [ udev_hwdb ],
++    install: get_option('udev_rules'),
++    install_dir: udev_hwdb_dir,
++    build_by_default: true
++    )
+ 
+ supported_devices = executable('fprint-list-supported-devices',
+     'fprint-list-supported-devices.c',
+diff --git a/meson.build b/meson.build
+index ab4ac72..db619d7 100644
+--- a/meson.build
++++ b/meson.build
+@@ -200,6 +200,8 @@ if get_option('udev_rules')
+         udev_dep = dependency('udev')
+         udev_hwdb_dir = udev_dep.get_pkgconfig_variable('udevdir') + '/hwdb.d'
+     endif
++else
++    udev_hwdb_dir = false
+ endif
+ 
+ if get_option('gtk-examples')

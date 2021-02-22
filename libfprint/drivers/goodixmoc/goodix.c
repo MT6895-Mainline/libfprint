@@ -53,6 +53,7 @@ struct _FpiDeviceGoodixMoc
   pgxfp_sensor_cfg_t sensorcfg;
   gint               enroll_stage;
   gint               max_enroll_stage;
+  gint               max_stored_prints;
   GCancellable      *cancellable;
   GPtrArray         *list_result;
   guint8             template_id[TEMPLATE_ID_SIZE];
@@ -330,7 +331,9 @@ fp_verify_capture_cb (FpiDeviceGoodixMoc  *self,
                            fpi_device_retry_new (FP_DEVICE_RETRY_GENERAL));
       return;
     }
-
+  fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                           FP_FINGER_STATUS_PRESENT,
+                                           FP_FINGER_STATUS_NONE);
   if (resp->capture_data_resp.img_quality == 0)
     {
       fpi_ssm_mark_failed (self->task_ssm,
@@ -341,6 +344,7 @@ fp_verify_capture_cb (FpiDeviceGoodixMoc  *self,
     {
       fpi_ssm_mark_failed (self->task_ssm,
                            fpi_device_retry_new (FP_DEVICE_RETRY_CENTER_FINGER));
+      return;
     }
   fpi_ssm_next_state (self->task_ssm);
 }
@@ -433,6 +437,9 @@ fp_verify_sm_run_state (FpiSsm *ssm, FpDevice *device)
   switch (fpi_ssm_get_cur_state (ssm))
     {
     case FP_VERIFY_CAPTURE:
+      fpi_device_report_finger_status_changes (device,
+                                               FP_FINGER_STATUS_NEEDED,
+                                               FP_FINGER_STATUS_NONE);
       goodix_sensor_cmd (self, MOC_CMD0_CAPTURE_DATA, MOC_CMD1_DEFAULT,
                          true,
                          (const guint8 *) &param,
@@ -560,6 +567,13 @@ fp_enroll_enum_cb (FpiDeviceGoodixMoc  *self,
                                                      resp->result));
       return;
     }
+  if (resp->finger_list_resp.finger_num >= self->max_stored_prints)
+    {
+      fpi_ssm_mark_failed (self->task_ssm,
+                           fpi_device_error_new (FP_DEVICE_ERROR_DATA_FULL));
+      return;
+    }
+
   fpi_ssm_jump_to_state (self->task_ssm, FP_ENROLL_CAPTURE);
 }
 
@@ -620,7 +634,9 @@ fp_enroll_capture_cb (FpiDeviceGoodixMoc  *self,
       fpi_ssm_jump_to_state (self->task_ssm, FP_ENROLL_CAPTURE);
       return;
     }
-
+  fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                           FP_FINGER_STATUS_PRESENT,
+                                           FP_FINGER_STATUS_NONE);
   if ((resp->capture_data_resp.img_quality < self->sensorcfg->config[4]) ||
       (resp->capture_data_resp.img_coverage < self->sensorcfg->config[5]))
     {
@@ -742,7 +758,7 @@ fp_finger_mode_cb (FpiDeviceGoodixMoc  *self,
       fpi_ssm_mark_failed (self->task_ssm, error);
       return;
     }
-  /* if reach max timeout(5sec) finger not up, swtich to finger up again */
+  /* if reach max timeout(5sec) finger not up, switch to finger up again */
   if (resp->finger_status.status == GX_ERROR_WAIT_FINGER_UP_TIMEOUT)
     {
       fpi_ssm_jump_to_state (self->task_ssm, FP_ENROLL_WAIT_FINGER_UP);
@@ -755,6 +771,9 @@ fp_finger_mode_cb (FpiDeviceGoodixMoc  *self,
                                                      "Switch finger mode failed"));
       return;
     }
+  fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                           FP_FINGER_STATUS_NONE,
+                                           FP_FINGER_STATUS_PRESENT);
   if (self->enroll_stage < self->max_enroll_stage)
     {
       fpi_ssm_jump_to_state (self->task_ssm, FP_ENROLL_CAPTURE);
@@ -817,6 +836,9 @@ fp_enroll_sm_run_state (FpiSsm *ssm, FpDevice *device)
       break;
 
     case FP_ENROLL_CAPTURE:
+      fpi_device_report_finger_status_changes (device,
+                                               FP_FINGER_STATUS_NEEDED,
+                                               FP_FINGER_STATUS_NONE);
       goodix_sensor_cmd (self, MOC_CMD0_CAPTURE_DATA, MOC_CMD1_DEFAULT,
                          true,
                          (const guint8 *) &dummy,
@@ -975,7 +997,7 @@ fp_init_config_cb (FpiDeviceGoodixMoc  *self,
       fpi_ssm_mark_failed (self->task_ssm, error);
       return;
     }
-
+  self->max_stored_prints = resp->finger_config.max_stored_prints;
   fpi_ssm_next_state (self->task_ssm);
 }
 
@@ -1259,6 +1281,8 @@ gx_fp_init (FpDevice *device)
   GError *error = NULL;
   int ret = 0;
 
+  self->max_stored_prints = FP_MAX_FINGERNUM;
+
   self->cancellable = g_cancellable_new ();
 
   self->sensorcfg = g_new0 (gxfp_sensor_cfg_t, 1);
@@ -1424,6 +1448,8 @@ static const FpIdEntry id_table[] = {
   { .vid = 0x27c6,  .pid = 0x5840,  },
   { .vid = 0x27c6,  .pid = 0x6496,  },
   { .vid = 0x27c6,  .pid = 0x60A2,  },
+  { .vid = 0x27c6,  .pid = 0x63AC,  },
+  { .vid = 0x27c6,  .pid = 0x639C,  },
   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */
 };
 

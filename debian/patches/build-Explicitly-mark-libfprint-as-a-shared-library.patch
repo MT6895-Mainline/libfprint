@@ -1,0 +1,27 @@
+From: Benjamin Berg <bberg@redhat.com>
+Date: Thu, 21 Jan 2021 17:36:41 +0100
+Subject: build: Explicitly mark libfprint as a shared library
+
+While meson suggests to always use 'library' this leads to some unwanted
+behaviors when it comes to generate pkg-config files for it, as they
+will include `Libs.Private` / `Required.private` fields that should not
+be really part of a shared library as libfprint is meant to be used.
+
+Origin: https://gitlab.freedesktop.org/libfprint/libfprint/-/commit/89890dbd
+---
+ libfprint/meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libfprint/meson.build b/libfprint/meson.build
+index 110c458..9425e09 100644
+--- a/libfprint/meson.build
++++ b/libfprint/meson.build
+@@ -258,7 +258,7 @@ libfprint_drivers = static_library('fprint-drivers',
+ mapfile = files('libfprint.ver')
+ vflag = '-Wl,--version-script,@0@/@1@'.format(meson.source_root(), mapfile[0])
+ 
+-libfprint = library(versioned_libname.split('lib')[1],
++libfprint = shared_library(versioned_libname.split('lib')[1],
+     sources: [
+         fp_enums,
+         libfprint_sources,

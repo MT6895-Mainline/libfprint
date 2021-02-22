@@ -27,6 +27,9 @@
 
 G_DEFINE_TYPE (FpiDeviceSynaptics, fpi_device_synaptics, FP_TYPE_DEVICE)
 
+static void init_identify_msg (FpDevice *device);
+static void compose_and_send_identify_msg (FpDevice *device);
+
 static const FpIdEntry id_table[] = {
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0xBD,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0xE9,  },
@@ -121,7 +124,7 @@ cmd_receive_cb (FpiUsbTransfer *transfer,
     {
       if (resp.response_id == BMKT_RSP_CANCEL_OP_OK)
         {
-          fp_dbg ("Received cancellation success resonse");
+          fp_dbg ("Received cancellation success response");
           fpi_ssm_mark_failed (transfer->ssm,
                                g_error_new_literal (G_IO_ERROR,
                                                     G_IO_ERROR_CANCELLED,
@@ -451,6 +454,37 @@ parse_print_data (GVariant      *data,
   return TRUE;
 }
 
+static FpPrint *
+create_print (FpiDeviceSynaptics *self,
+              guint8             *user_id,
+              guint8              finger_id)
+{
+  FpPrint *print;
+  g_autofree gchar *user_id_safe;
+  GVariant *data = NULL;
+  GVariant *uid = NULL;
+
+  user_id_safe = g_strndup ((char *) user_id, BMKT_MAX_USER_ID_LEN);
+
+  print = fp_print_new (FP_DEVICE (self));
+  uid = g_variant_new_fixed_array (G_VARIANT_TYPE_BYTE,
+                                   user_id_safe,
+                                   strlen (user_id_safe),
+                                   1);
+  data = g_variant_new ("(y@ay)",
+                        finger_id,
+                        uid);
+
+  fpi_print_set_type (print, FPI_PRINT_RAW);
+  fpi_print_set_device_stored (print, TRUE);
+  g_object_set (print, "fpi-data", data, NULL);
+  g_object_set (print, "description", user_id_safe, NULL);
+
+  fpi_print_fill_from_user_id (print, user_id_safe);
+
+  return print;
+}
+
 static void
 list_msg_cb (FpiDeviceSynaptics *self,
              bmkt_response_t    *resp,
@@ -503,10 +537,7 @@ list_msg_cb (FpiDeviceSynaptics *self,
 
       for (int n = 0; n < BMKT_MAX_NUM_TEMPLATES_INTERNAL_FLASH; n++)
         {
-          GVariant *data = NULL;
-          GVariant *uid = NULL;
           FpPrint *print;
-          gchar *userid;
 
           if (get_enroll_templates_resp->templates[n].user_id_len == 0)
             continue;
@@ -519,23 +550,9 @@ list_msg_cb (FpiDeviceSynaptics *self,
                    get_enroll_templates_resp->templates[n].user_id,
                    get_enroll_templates_resp->templates[n].finger_id);
 
-          userid = (gchar *) get_enroll_templates_resp->templates[n].user_id;
-
-          print = fp_print_new (FP_DEVICE (self));
-          uid = g_variant_new_fixed_array (G_VARIANT_TYPE_BYTE,
-                                           get_enroll_templates_resp->templates[n].user_id,
-                                           get_enroll_templates_resp->templates[n].user_id_len,
-                                           1);
-          data = g_variant_new ("(y@ay)",
-                                get_enroll_templates_resp->templates[n].finger_id,
-                                uid);
-
-          fpi_print_set_type (print, FPI_PRINT_RAW);
-          fpi_print_set_device_stored (print, TRUE);
-          g_object_set (print, "fpi-data", data, NULL);
-          g_object_set (print, "description", get_enroll_templates_resp->templates[n].user_id, NULL);
-
-          fpi_print_fill_from_user_id (print, userid);
+          print = create_print (self,
+                                get_enroll_templates_resp->templates[n].user_id,
+                                get_enroll_templates_resp->templates[n].finger_id);
 
           g_ptr_array_add (self->list_result, g_object_ref_sink (print));
         }
@@ -649,7 +666,7 @@ verify_msg_cb (FpiDeviceSynaptics *self,
       fp_info ("Verify was successful! for user: %s finger: %d score: %f",
                verify_resp->user_id, verify_resp->finger_id, verify_resp->match_result);
       fpi_device_verify_report (device, FPI_MATCH_SUCCESS, NULL, NULL);
-      fpi_device_verify_complete (device, NULL);
+      verify_complete_after_finger_removal (self);
       break;
     }
 }
@@ -725,6 +742,12 @@ identify_msg_cb (FpiDeviceSynaptics *self,
       fp_info ("Place Finger on the Sensor!");
       break;
 
+    case BMKT_RSP_SEND_NEXT_USER_ID:
+      {
+        compose_and_send_identify_msg (device);
+        break;
+      }
+
     case BMKT_RSP_ID_FAIL:
       if (resp->result == BMKT_SENSOR_STIMULUS_ERROR)
         {
@@ -760,45 +783,47 @@ identify_msg_cb (FpiDeviceSynaptics *self,
         FpPrint *print = NULL;
         GPtrArray *prints = NULL;
         g_autoptr(GVariant) data = NULL;
-        guint8 finger;
-        const guint8 *user_id;
-        gsize user_id_len = 0;
-        gint cnt = 0;
-        gboolean find = FALSE;
+        gboolean found = FALSE;
+        guint index;
+
+        print = create_print (self,
+                              resp->response.id_resp.user_id,
+                              resp->response.id_resp.finger_id);
 
         fpi_device_get_identify_data (device, &prints);
 
-        for (cnt = 0; cnt < prints->len; cnt++)
-          {
-            print = g_ptr_array_index (prints, cnt);
-            g_object_get (print, "fpi-data", &data, NULL);
-            g_debug ("data is %p", data);
-            parse_print_data (data, &finger, &user_id, &user_id_len);
-            if (user_id)
-              {
-                if (memcmp (resp->response.id_resp.user_id, user_id, user_id_len) == 0)
-                  {
-                    find = TRUE;
-                    break;
-                  }
-              }
-          }
-        if(find)
-          {
-            fpi_device_identify_report (device, print, print, NULL);
-            fpi_device_identify_complete (device, NULL);
-          }
+        found = g_ptr_array_find_with_equal_func (prints,
+                                                  print,
+                                                  (GEqualFunc) fp_print_equal,
+                                                  &index);
+
+        if (found)
+          fpi_device_identify_report (device, g_ptr_array_index (prints, index), print, NULL);
         else
-          {
-            fpi_device_identify_report (device, NULL, NULL, NULL);
-            identify_complete_after_finger_removal (self);
-          }
+          fpi_device_identify_report (device, NULL, print, NULL);
+
+        identify_complete_after_finger_removal (self);
       }
     }
 }
 
 static void
 identify (FpDevice *device)
+{
+  init_identify_msg (device);
+  compose_and_send_identify_msg (device);
+}
+
+static void
+init_identify_msg (FpDevice *device)
+{
+  FpiDeviceSynaptics *self = FPI_DEVICE_SYNAPTICS (device);
+
+  self->id_idx = 0;
+}
+
+static void
+compose_and_send_identify_msg (FpDevice *device)
 {
   FpiDeviceSynaptics *self = FPI_DEVICE_SYNAPTICS (device);
   FpPrint *print = NULL;
@@ -808,28 +833,77 @@ identify (FpDevice *device)
   guint8 finger;
   const guint8 *user_id;
   gsize user_id_len = 0;
-  gint cnt = 0;
+  g_autofree guint8 *payload = NULL;
+  guint8 payload_len = 0;
+  guint8 payloadOffset = 0;
 
   fpi_device_get_identify_data (device, &prints);
-
-  for (cnt = 0; cnt < prints->len; cnt++)
+  if (prints->len > UINT8_MAX)
     {
-      print = g_ptr_array_index (prints, cnt);
-      g_object_get (print, "fpi-data", &data, NULL);
-      g_debug ("data is %p", data);
-      if (!parse_print_data (data, &finger, &user_id, &user_id_len))
-        {
-          fpi_device_identify_complete (device,
-                                        fpi_device_error_new (FP_DEVICE_ERROR_DATA_INVALID));
-          return;
-        }
+      fpi_device_identify_complete (device,
+                                    fpi_device_error_new (FP_DEVICE_ERROR_DATA_INVALID));
+      return;
     }
-  G_DEBUG_HERE ();
+  if(self->id_idx >= prints->len)
+    {
+      fp_warn ("Device asked for more prints than we are providing.");
+      fpi_device_identify_complete (device,
+                                    fpi_device_error_new_msg (FP_DEVICE_ERROR_PROTO,
+                                                              "Unexpected index"));
+      return;
+    }
+  print = g_ptr_array_index (prints, self->id_idx);
+  g_object_get (print, "fpi-data", &data, NULL);
+  g_debug ("data is %p", data);
+  if (!parse_print_data (data, &finger, &user_id, &user_id_len))
+    {
+      fpi_device_identify_complete (device,
+                                    fpi_device_error_new (FP_DEVICE_ERROR_DATA_INVALID));
+      return;
+    }
+  if(self->id_idx == 0)
+    {
+      /*
+       * Construct payload.
+       * 1st byte is total number of IDs in list.
+       * 2nd byte is number of IDs in list.
+       * 1 byte for each ID length, maximum id length is 100.
+       * user_id_len bytes of each ID
+       */
+      payload_len = 2 + 1 + user_id_len;
+      payload = g_malloc0 (payload_len);
+      payload[payloadOffset] = prints->len;
+      payloadOffset += 1;
+      payload[payloadOffset] = 1; /* send one id per message */
+      payloadOffset += 1;
+      payload[payloadOffset] = user_id_len;
+      payloadOffset += 1;
+      memcpy (&payload[payloadOffset], user_id, user_id_len);
+      payloadOffset += user_id_len;
 
-  synaptics_sensor_cmd (self, 0, BMKT_CMD_ID_USER, NULL, 0, identify_msg_cb);
+      G_DEBUG_HERE ();
+
+      synaptics_sensor_cmd (self, 0, BMKT_CMD_ID_USER_IN_ORDER, payload, payloadOffset, identify_msg_cb);
+    }
+  else
+    {
+      /*
+       * 1st byte is the number of IDs
+       * 1 byte for each ID length
+       * id_length bytes for each ID
+       */
+      payload_len = 1 + 1 + user_id_len;
+      payload = g_malloc0 (payload_len);
+      payload[payloadOffset] = 1; /* send one id per message */
+      payloadOffset += 1;
+      payload[payloadOffset] = user_id_len;
+      payloadOffset += 1;
+      memcpy (&payload[payloadOffset], user_id, user_id_len);
+      payloadOffset += user_id_len;
+      synaptics_sensor_cmd (self, self->cmd_seq_num, BMKT_CMD_ID_NEXT_USER, payload, payloadOffset, NULL);
+    }
+  self->id_idx++;
 }
-
-
 static void
 enroll_msg_cb (FpiDeviceSynaptics *self,
                bmkt_response_t    *resp,
@@ -1060,6 +1134,44 @@ delete_print (FpDevice *device)
 }
 
 static void
+prob_msg_cb (FpiDeviceSynaptics *self,
+             bmkt_response_t    *resp,
+             GError             *error)
+{
+  GUsbDevice *usb_dev = NULL;
+  g_autofree gchar *serial = NULL;
+
+  usb_dev = fpi_device_get_usb_device (FP_DEVICE (self));
+
+  if (error)
+    {
+      g_usb_device_close (usb_dev, NULL);
+      fpi_device_probe_complete (FP_DEVICE (self), NULL, NULL,
+                                 fpi_device_error_new_msg (FP_DEVICE_ERROR_GENERAL, "unsupported firmware version"));
+      return;
+    }
+
+  if (g_strcmp0 (g_getenv ("FP_DEVICE_EMULATION"), "1") == 0)
+    serial = g_strdup ("emulated-device");
+  else
+    serial = g_usb_device_get_string_descriptor (usb_dev,
+                                                 g_usb_device_get_serial_number_index (usb_dev),
+                                                 &error);
+
+  if (resp->result == BMKT_SUCCESS)
+    {
+      g_usb_device_close (usb_dev, NULL);
+      fpi_device_probe_complete (FP_DEVICE (self), serial, NULL, error);
+    }
+  else
+    {
+      g_warning ("Probe fingerprint sensor failed with %d!", resp->result);
+      g_usb_device_close (usb_dev, NULL);
+      fpi_device_probe_complete (FP_DEVICE (self), serial, NULL, fpi_device_error_new (FP_DEVICE_ERROR_GENERAL));
+    }
+}
+
+static void
 dev_probe (FpDevice *device)
 {
   FpiDeviceSynaptics *self = FPI_DEVICE_SYNAPTICS (device);
@@ -1159,40 +1271,7 @@ dev_probe (FpDevice *device)
   fp_dbg ("Target: %d", self->mis_version.target);
   fp_dbg ("Product: %d", self->mis_version.product);
 
-
-  /* We need at least firmware version 10.1, and for 10.1 build 2989158 */
-  if (self->mis_version.version_major < 10 ||
-      self->mis_version.version_minor < 1 ||
-      (self->mis_version.version_major == 10 &&
-       self->mis_version.version_minor == 1 &&
-       self->mis_version.build_num < 2989158))
-    {
-      fp_warn ("Firmware version %d.%d with build number %d is unsupported",
-               self->mis_version.version_major,
-               self->mis_version.version_minor,
-               self->mis_version.build_num);
-
-      error = fpi_device_error_new_msg (FP_DEVICE_ERROR_GENERAL,
-                                        "Unsupported firmware version "
-                                        "(%d.%d with build number %d)",
-                                        self->mis_version.version_major,
-                                        self->mis_version.version_minor,
-                                        self->mis_version.build_num);
-      goto err_close;
-    }
-
-  /* This is the same as the serial_number from above, hex encoded and somewhat reordered */
-  /* Should we add in more, e.g. the chip revision? */
-  if (g_strcmp0 (g_getenv ("FP_DEVICE_EMULATION"), "1") == 0)
-    serial = g_strdup ("emulated-device");
-  else
-    serial = g_usb_device_get_string_descriptor (usb_dev,
-                                                 g_usb_device_get_serial_number_index (usb_dev),
-                                                 &error);
-
-  g_usb_device_close (usb_dev, NULL);
-
-  fpi_device_probe_complete (device, serial, NULL, error);
+  synaptics_sensor_cmd (self, 0, BMKT_CMD_FPS_INIT, NULL, 0, prob_msg_cb);
 
   return;
 

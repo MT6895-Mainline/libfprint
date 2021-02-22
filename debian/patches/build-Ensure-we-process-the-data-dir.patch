@@ -1,0 +1,21 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Thu, 21 Jan 2021 00:57:43 +0100
+Subject: build: Ensure we process the data dir
+
+Origin: https://gitlab.freedesktop.org/libfprint/libfprint/-/commit/018641ad
+---
+ meson.build | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/meson.build b/meson.build
+index 415f27e..9494ebb 100644
+--- a/meson.build
++++ b/meson.build
+@@ -237,6 +237,7 @@ if get_option('gtk-examples')
+     subdir('demo')
+ endif
+ 
++subdir('data')
+ subdir('tests')
+ 
+ pkgconfig = import('pkgconfig')

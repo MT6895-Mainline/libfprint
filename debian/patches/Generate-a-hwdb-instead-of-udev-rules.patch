@@ -1,0 +1,491 @@
+From: Benjamin Berg <bberg@redhat.com>
+Date: Tue, 19 Jan 2021 14:13:03 +0100
+Subject: Generate a hwdb instead of udev rules
+
+We only use the rules/hwdb to enable auto-suspend. So, instead of
+shipping our own rules, we can just use the existing autosuspend rules
+and ship a hwdb that sets the appropriate flag.
+
+Closes: #336
+
+Origin: https://gitlab.freedesktop.org/libfprint/libfprint/-/commit/55a2bb55
+---
+ libfprint/fprint-list-udev-hwdb.c  | 191 +++++++++++++++++++++++++++++++++++++
+ libfprint/fprint-list-udev-rules.c | 188 ------------------------------------
+ libfprint/meson.build              |  10 +-
+ meson.build                        |   6 +-
+ meson_options.txt                  |   4 +-
+ tests/meson.build                  |   4 +-
+ 6 files changed, 203 insertions(+), 200 deletions(-)
+ create mode 100644 libfprint/fprint-list-udev-hwdb.c
+ delete mode 100644 libfprint/fprint-list-udev-rules.c
+
+diff --git a/libfprint/fprint-list-udev-hwdb.c b/libfprint/fprint-list-udev-hwdb.c
+new file mode 100644
+index 0000000..b687085
+--- /dev/null
++++ b/libfprint/fprint-list-udev-hwdb.c
+@@ -0,0 +1,191 @@
++/*
++ * Copyright (C) 2009 Red Hat <mjg@redhat.com>
++ * Copyright (C) 2008 Bastien Nocera <hadess@hadess.net>
++ * Copyright (C) 2008 Timo Hoenig <thoenig@suse.de>, <thoenig@nouse.net>
++ * Copyright (C) 2019 Benjamin Berg <bberg@redhat.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include <config.h>
++
++#include "fpi-context.h"
++#include "fpi-device.h"
++
++static const FpIdEntry whitelist_id_table[] = {
++  /* Currently known and unsupported devices.
++   * You can generate this list from the wiki page using e.g.:
++   *   gio cat https://gitlab.freedesktop.org/libfprint/wiki/-/wikis/Unsupported-Devices.md | sed -n 's!|.*\([0-9a-fA-F]\{4\}\):\([0-9a-fA-F]\{4\}\).*|.*!  { .vid = 0x\1, .pid = 0x\2 },!p'
++   */
++  { .vid = 0x04f3, .pid = 0x036b },
++  { .vid = 0x04f3, .pid = 0x0c00 },
++  { .vid = 0x04f3, .pid = 0x0c4b },
++  { .vid = 0x04f3, .pid = 0x0c4c },
++  { .vid = 0x04f3, .pid = 0x0c4f },
++  { .vid = 0x04f3, .pid = 0x0c57 },
++  { .vid = 0x04f3, .pid = 0x2706 },
++  { .vid = 0x06cb, .pid = 0x0081 },
++  { .vid = 0x06cb, .pid = 0x0088 },
++  { .vid = 0x06cb, .pid = 0x008a },
++  { .vid = 0x06cb, .pid = 0x009a },
++  { .vid = 0x06cb, .pid = 0x009b },
++  { .vid = 0x06cb, .pid = 0x00a2 },
++  { .vid = 0x06cb, .pid = 0x00b7 },
++  { .vid = 0x06cb, .pid = 0x00bb },
++  { .vid = 0x06cb, .pid = 0x00be },
++  { .vid = 0x06cb, .pid = 0x00cb },
++  { .vid = 0x06cb, .pid = 0x00d8 },
++  { .vid = 0x06cb, .pid = 0x00da },
++  { .vid = 0x0a5c, .pid = 0x5801 },
++  { .vid = 0x0a5c, .pid = 0x5805 },
++  { .vid = 0x0a5c, .pid = 0x5834 },
++  { .vid = 0x0a5c, .pid = 0x5843 },
++  { .vid = 0x10a5, .pid = 0x0007 },
++  { .vid = 0x1188, .pid = 0x9545 },
++  { .vid = 0x138a, .pid = 0x0007 },
++  { .vid = 0x138a, .pid = 0x003a },
++  { .vid = 0x138a, .pid = 0x003c },
++  { .vid = 0x138a, .pid = 0x003d },
++  { .vid = 0x138a, .pid = 0x003f },
++  { .vid = 0x138a, .pid = 0x0090 },
++  { .vid = 0x138a, .pid = 0x0091 },
++  { .vid = 0x138a, .pid = 0x0092 },
++  { .vid = 0x138a, .pid = 0x0094 },
++  { .vid = 0x138a, .pid = 0x0097 },
++  { .vid = 0x138a, .pid = 0x009d },
++  { .vid = 0x138a, .pid = 0x00ab },
++  { .vid = 0x147e, .pid = 0x1002 },
++  { .vid = 0x1491, .pid = 0x0088 },
++  { .vid = 0x16d1, .pid = 0x1027 },
++  { .vid = 0x1c7a, .pid = 0x0300 },
++  { .vid = 0x1c7a, .pid = 0x0570 },
++  { .vid = 0x1c7a, .pid = 0x0575 },
++  { .vid = 0x27c6, .pid = 0x5042 },
++  { .vid = 0x27c6, .pid = 0x5110 },
++  { .vid = 0x27c6, .pid = 0x5117 },
++  { .vid = 0x27c6, .pid = 0x5201 },
++  { .vid = 0x27c6, .pid = 0x521d },
++  { .vid = 0x27c6, .pid = 0x5301 },
++  { .vid = 0x27c6, .pid = 0x530c },
++  { .vid = 0x27c6, .pid = 0x532d },
++  { .vid = 0x27c6, .pid = 0x533c },
++  { .vid = 0x27c6, .pid = 0x5381 },
++  { .vid = 0x27c6, .pid = 0x5385 },
++  { .vid = 0x27c6, .pid = 0x538c },
++  { .vid = 0x27c6, .pid = 0x538d },
++  { .vid = 0x27c6, .pid = 0x5395 },
++  { .vid = 0x27c6, .pid = 0x5584 },
++  { .vid = 0x27c6, .pid = 0x55a2 },
++  { .vid = 0x27c6, .pid = 0x55a4 },
++  { .vid = 0x27c6, .pid = 0x55b4 },
++  { .vid = 0x27c6, .pid = 0x5740 },
++  { .vid = 0x2808, .pid = 0x9338 },
++  { .vid = 0x298d, .pid = 0x2033 },
++  { .vid = 0x3538, .pid = 0x0930 },
++  { .vid = 0 },
++};
++
++static const FpIdEntry blacklist_id_table[] = {
++  { .vid = 0x0483, .pid = 0x2016 },
++  /* https://bugs.freedesktop.org/show_bug.cgi?id=66659 */
++  { .vid = 0x045e, .pid = 0x00bb },
++  { .vid = 0 },
++};
++
++static const FpDeviceClass whitelist = {
++  .type = FP_DEVICE_TYPE_USB,
++  .id_table = whitelist_id_table,
++  .id = "whitelist",
++  .full_name = "Hardcoded whitelist"
++};
++
++GHashTable *printed = NULL;
++
++static void
++print_driver (const FpDeviceClass *cls)
++{
++  const FpIdEntry *entry;
++  gint num_printed = 0;
++
++  if (cls->type != FP_DEVICE_TYPE_USB)
++    return;
++
++  for (entry = cls->id_table; entry->vid != 0; entry++)
++    {
++      const FpIdEntry *bl_entry;
++      char *key;
++
++      for (bl_entry = blacklist_id_table; bl_entry->vid != 0; bl_entry++)
++        if (entry->vid == bl_entry->vid && entry->pid == bl_entry->pid)
++          break;
++
++      if (bl_entry->vid != 0)
++        continue;
++
++      key = g_strdup_printf ("%04x:%04x", entry->vid, entry->pid);
++
++      if (g_hash_table_lookup (printed, key) != NULL)
++        {
++          if (cls == &whitelist)
++            g_warning ("%s implemented by driver %s",
++                       key, (const char *) g_hash_table_lookup (printed, key));
++          g_free (key);
++          continue;
++        }
++
++      g_hash_table_insert (printed, key, (void *) cls->id);
++
++      if (num_printed == 0)
++        {
++          if (cls != &whitelist)
++            g_print ("\n# Supported by libfprint driver %s\n", cls->id);
++          else
++            g_print ("\n# Known unsupported devices\n");
++        }
++
++      g_print ("usb:v%04Xp%04X*\n",
++               entry->vid, entry->pid);
++      num_printed++;
++    }
++
++  if (num_printed > 0)
++    g_print (" ID_AUTOSUSPEND=1\n");
++}
++
++int
++main (int argc, char **argv)
++{
++  g_autoptr(GArray) drivers = fpi_get_driver_types ();
++  guint i;
++
++  printed = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
++
++  for (i = 0; i < drivers->len; i++)
++    {
++      GType driver = g_array_index (drivers, GType, i);
++      g_autoptr(FpDeviceClass) cls = g_type_class_ref (driver);
++
++      if (cls->type != FP_DEVICE_TYPE_USB)
++        continue;
++
++      print_driver (cls);
++    }
++
++  print_driver (&whitelist);
++
++  g_hash_table_destroy (printed);
++
++  return 0;
++}
+diff --git a/libfprint/fprint-list-udev-rules.c b/libfprint/fprint-list-udev-rules.c
+deleted file mode 100644
+index 050a450..0000000
+--- a/libfprint/fprint-list-udev-rules.c
++++ /dev/null
+@@ -1,188 +0,0 @@
+-/*
+- * Copyright (C) 2009 Red Hat <mjg@redhat.com>
+- * Copyright (C) 2008 Bastien Nocera <hadess@hadess.net>
+- * Copyright (C) 2008 Timo Hoenig <thoenig@suse.de>, <thoenig@nouse.net>
+- * Copyright (C) 2019 Benjamin Berg <bberg@redhat.com>
+- *
+- * This library is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU Lesser General Public
+- * License as published by the Free Software Foundation; either
+- * version 2.1 of the License, or (at your option) any later version.
+- *
+- * This library is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public
+- * License along with this library; if not, write to the Free Software
+- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+- */
+-
+-#include <config.h>
+-
+-#include "fpi-context.h"
+-#include "fpi-device.h"
+-
+-static const FpIdEntry whitelist_id_table[] = {
+-  /* Currently known and unsupported devices.
+-   * You can generate this list from the wiki page using e.g.:
+-   *   gio cat https://gitlab.freedesktop.org/libfprint/wiki/-/wikis/Unsupported-Devices.md | sed -n 's!|.*\([0-9a-fA-F]\{4\}\):\([0-9a-fA-F]\{4\}\).*|.*!  { .vid = 0x\1, .pid = 0x\2 },!p'
+-   */
+-  { .vid = 0x04f3, .pid = 0x036b },
+-  { .vid = 0x04f3, .pid = 0x0c00 },
+-  { .vid = 0x04f3, .pid = 0x0c4b },
+-  { .vid = 0x04f3, .pid = 0x0c4c },
+-  { .vid = 0x04f3, .pid = 0x0c4f },
+-  { .vid = 0x04f3, .pid = 0x0c57 },
+-  { .vid = 0x04f3, .pid = 0x2706 },
+-  { .vid = 0x06cb, .pid = 0x0081 },
+-  { .vid = 0x06cb, .pid = 0x0088 },
+-  { .vid = 0x06cb, .pid = 0x008a },
+-  { .vid = 0x06cb, .pid = 0x009a },
+-  { .vid = 0x06cb, .pid = 0x009b },
+-  { .vid = 0x06cb, .pid = 0x00a2 },
+-  { .vid = 0x06cb, .pid = 0x00b7 },
+-  { .vid = 0x06cb, .pid = 0x00bb },
+-  { .vid = 0x06cb, .pid = 0x00be },
+-  { .vid = 0x06cb, .pid = 0x00cb },
+-  { .vid = 0x06cb, .pid = 0x00d8 },
+-  { .vid = 0x06cb, .pid = 0x00da },
+-  { .vid = 0x0a5c, .pid = 0x5801 },
+-  { .vid = 0x0a5c, .pid = 0x5805 },
+-  { .vid = 0x0a5c, .pid = 0x5834 },
+-  { .vid = 0x0a5c, .pid = 0x5843 },
+-  { .vid = 0x10a5, .pid = 0x0007 },
+-  { .vid = 0x1188, .pid = 0x9545 },
+-  { .vid = 0x138a, .pid = 0x0007 },
+-  { .vid = 0x138a, .pid = 0x003a },
+-  { .vid = 0x138a, .pid = 0x003c },
+-  { .vid = 0x138a, .pid = 0x003d },
+-  { .vid = 0x138a, .pid = 0x003f },
+-  { .vid = 0x138a, .pid = 0x0090 },
+-  { .vid = 0x138a, .pid = 0x0091 },
+-  { .vid = 0x138a, .pid = 0x0092 },
+-  { .vid = 0x138a, .pid = 0x0094 },
+-  { .vid = 0x138a, .pid = 0x0097 },
+-  { .vid = 0x138a, .pid = 0x009d },
+-  { .vid = 0x138a, .pid = 0x00ab },
+-  { .vid = 0x147e, .pid = 0x1002 },
+-  { .vid = 0x1491, .pid = 0x0088 },
+-  { .vid = 0x16d1, .pid = 0x1027 },
+-  { .vid = 0x1c7a, .pid = 0x0300 },
+-  { .vid = 0x1c7a, .pid = 0x0570 },
+-  { .vid = 0x1c7a, .pid = 0x0575 },
+-  { .vid = 0x27c6, .pid = 0x5042 },
+-  { .vid = 0x27c6, .pid = 0x5110 },
+-  { .vid = 0x27c6, .pid = 0x5117 },
+-  { .vid = 0x27c6, .pid = 0x5201 },
+-  { .vid = 0x27c6, .pid = 0x521d },
+-  { .vid = 0x27c6, .pid = 0x5301 },
+-  { .vid = 0x27c6, .pid = 0x530c },
+-  { .vid = 0x27c6, .pid = 0x532d },
+-  { .vid = 0x27c6, .pid = 0x533c },
+-  { .vid = 0x27c6, .pid = 0x5381 },
+-  { .vid = 0x27c6, .pid = 0x5385 },
+-  { .vid = 0x27c6, .pid = 0x538c },
+-  { .vid = 0x27c6, .pid = 0x538d },
+-  { .vid = 0x27c6, .pid = 0x5395 },
+-  { .vid = 0x27c6, .pid = 0x5584 },
+-  { .vid = 0x27c6, .pid = 0x55a2 },
+-  { .vid = 0x27c6, .pid = 0x55a4 },
+-  { .vid = 0x27c6, .pid = 0x55b4 },
+-  { .vid = 0x27c6, .pid = 0x5740 },
+-  { .vid = 0x2808, .pid = 0x9338 },
+-  { .vid = 0x298d, .pid = 0x2033 },
+-  { .vid = 0x3538, .pid = 0x0930 },
+-  { .vid = 0 },
+-};
+-
+-static const FpIdEntry blacklist_id_table[] = {
+-  { .vid = 0x0483, .pid = 0x2016 },
+-  /* https://bugs.freedesktop.org/show_bug.cgi?id=66659 */
+-  { .vid = 0x045e, .pid = 0x00bb },
+-  { .vid = 0 },
+-};
+-
+-static const FpDeviceClass whitelist = {
+-  .type = FP_DEVICE_TYPE_USB,
+-  .id_table = whitelist_id_table,
+-  .id = "whitelist",
+-  .full_name = "Hardcoded whitelist"
+-};
+-
+-GHashTable *printed = NULL;
+-
+-static void
+-print_driver (const FpDeviceClass *cls)
+-{
+-  const FpIdEntry *entry;
+-  gint num_printed = 0;
+-
+-  if (cls->type != FP_DEVICE_TYPE_USB)
+-    return;
+-
+-  for (entry = cls->id_table; entry->vid != 0; entry++)
+-    {
+-      const FpIdEntry *bl_entry;
+-      char *key;
+-
+-      for (bl_entry = blacklist_id_table; bl_entry->vid != 0; bl_entry++)
+-        if (entry->vid == bl_entry->vid && entry->pid == bl_entry->pid)
+-          break;
+-
+-      if (bl_entry->vid != 0)
+-        continue;
+-
+-      key = g_strdup_printf ("%04x:%04x", entry->vid, entry->pid);
+-
+-      if (g_hash_table_lookup (printed, key) != NULL)
+-        {
+-          if (cls == &whitelist)
+-            g_warning ("%s implemented by driver %s",
+-                       key, (const char *) g_hash_table_lookup (printed, key));
+-          g_free (key);
+-          continue;
+-        }
+-
+-      g_hash_table_insert (printed, key, (void *) cls->id);
+-
+-      if (num_printed == 0)
+-        g_print ("# %s\n", cls->full_name);
+-
+-      g_print ("SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"%04x\", ATTRS{idProduct}==\"%04x\", ATTRS{dev}==\"*\", TEST==\"power/control\", ATTR{power/control}=\"auto\"\n",
+-               entry->vid, entry->pid);
+-      g_print ("SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"%04x\", ATTRS{idProduct}==\"%04x\", ENV{LIBFPRINT_DRIVER}=\"%s\"\n",
+-               entry->vid, entry->pid, cls->full_name);
+-      num_printed++;
+-    }
+-
+-  if (num_printed > 0)
+-    g_print ("\n");
+-}
+-
+-int
+-main (int argc, char **argv)
+-{
+-  g_autoptr(GArray) drivers = fpi_get_driver_types ();
+-  guint i;
+-
+-  printed = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+-
+-  for (i = 0; i < drivers->len; i++)
+-    {
+-      GType driver = g_array_index (drivers, GType, i);
+-      g_autoptr(FpDeviceClass) cls = g_type_class_ref (driver);
+-
+-      if (cls->type != FP_DEVICE_TYPE_USB)
+-        continue;
+-
+-      print_driver (cls);
+-    }
+-
+-  print_driver (&whitelist);
+-
+-  g_hash_table_destroy (printed);
+-
+-  return 0;
+-}
+diff --git a/libfprint/meson.build b/libfprint/meson.build
+index 4d1d30c..e385ce8 100644
+--- a/libfprint/meson.build
++++ b/libfprint/meson.build
+@@ -295,19 +295,19 @@ libfprint_private_dep = declare_dependency(
+     ]
+ )
+ 
+-udev_rules = executable('fprint-list-udev-rules',
+-    'fprint-list-udev-rules.c',
++udev_hwdb = executable('fprint-list-udev-hwdb',
++    'fprint-list-udev-hwdb.c',
+     dependencies: libfprint_private_dep,
+     link_with: libfprint_drivers,
+     install: false)
+ 
+ if get_option('udev_rules')
+     custom_target('udev-rules',
+-        output: '60-@0@-autosuspend.rules'.format(versioned_libname),
++        output: '60-autosuspend-@0@.hwdb'.format(versioned_libname),
+         capture: true,
+-        command: [ udev_rules ],
++        command: [ udev_hwdb ],
+         install: true,
+-        install_dir: udev_rules_dir)
++        install_dir: udev_hwdb_dir)
+ endif
+ 
+ supported_devices = executable('fprint-list-supported-devices',
+diff --git a/meson.build b/meson.build
+index 483f1ec..ab4ac72 100644
+--- a/meson.build
++++ b/meson.build
+@@ -194,11 +194,11 @@ drivers_type_func += '}'
+ root_inc = include_directories('.')
+ 
+ if get_option('udev_rules')
+-    udev_rules_dir = get_option('udev_rules_dir')
++    udev_hwdb_dir = get_option('udev_hwdb_dir')
+ 
+-    if udev_rules_dir == 'auto'
++    if udev_hwdb_dir == 'auto'
+         udev_dep = dependency('udev')
+-        udev_rules_dir = udev_dep.get_pkgconfig_variable('udevdir') + '/rules.d'
++        udev_hwdb_dir = udev_dep.get_pkgconfig_variable('udevdir') + '/hwdb.d'
+     endif
+ endif
+ 
+diff --git a/meson_options.txt b/meson_options.txt
+index 746efdc..414695f 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -10,8 +10,8 @@ option('udev_rules',
+        description: 'Whether to create a udev rules file',
+        type: 'boolean',
+        value: true)
+-option('udev_rules_dir',
+-       description: 'Installation path for udev rules',
++option('udev_hwdb_dir',
++       description: 'Installation path for udev hwdb',
+        type: 'string',
+        value: 'auto')
+ option('gtk-examples',
+diff --git a/tests/meson.build b/tests/meson.build
+index 27bdd9f..4ebf3b7 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -170,8 +170,8 @@ foreach test_name: unit_tests
+ endforeach
+ 
+ # Run udev rule generator with fatal warnings
+-test('udev-rules',
+-     udev_rules,
++test('udev-hwdb',
++     udev_hwdb,
+      env: envs)
+ 
+ gdb = find_program('gdb', required: false)

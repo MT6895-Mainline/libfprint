@@ -1,3 +1,55 @@
+libfprint (1:1.90.7-3) experimental; urgency=medium
+
+  * gbp.conf: Prepare for experimental branching
+  * debian/patches:
+    - Use hwdb to store device autosuspend rules and drop debian specifics.
+      Upstream will use an hwdb to store the device autosuspend (that will be
+      included in systemd also, so libfprint packagin may stop shipping it at
+      later point), so use it earlier.
+      Drop the debian specific rules to set the devices part of the `plugdev`
+      group as such devices should not be ever readable by an user, but the
+      access should be managed through a libfprint-based service (frpintd at
+      the date).
+    - Explicitly mark libfprint as a shared library
+  * libfprint-2-2.install: Install hwdb file
+  * debian/rules:
+    - Do not autorename upstream rules file anymore.
+      It's not there, while there's no point to rename the hwdb one.
+    - Manually set udev hwdb directory (was rules dir before)
+    - Don't remove the meson generated private values from pc file.
+      This is now generated correctly by upstream, so no need to drop anything
+      from it.
+  * debian: Generate postinst devices list automatically at gbp import phase.
+    Alternatively provide a script to keep the post-inst script updated
+  * debian/libfprint-2-2.postinst: Upgrade as per upstream hwdb.
+    Blacklisted devices can be now removed from the trigger list as we don't
+    add them to plugdev anymore.
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 21 Jan 2021 19:53:12 +0100
+
+libfprint (1:1.90.7-2) unstable; urgency=medium
+
+  * debian/patches: Skip udev rules tests when not all drivers are compiled
+  * debian/libfprint-2-2.postinst: Regenerate the udev list based on new IDs
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 21 Jan 2021 17:10:57 +0100
+
+libfprint (1:1.90.7-1) unstable; urgency=medium
+
+  * New upstream release:
+    - vfs5011: Fix possible use-after-free
+    - goodixmoc: Add two new PIDs (0x63AC, 0x639C)
+    - goodixmoc: Support finger status API
+    - synaptics: Only identify within provided prints
+    - synaptics: Reject devices with old firmware during probe (#239)
+  * debian/patches:
+    - Refresh, dropping merged
+    - Include upstream udev fixes and use hardcoded rules
+    - Ensure that umockdev tests will pass with libusb 1.0.24
+      (Closes: #977848, #978256)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 21 Jan 2021 13:38:59 +0100
+
 libfprint (1:1.90.6+tod1-0ubuntu2) hirsute; urgency=medium
 
   * d/p/meson-Do-not-support-drivers-known-to-fail-in-Big-Endian-.patch:
@@ -21,6 +73,43 @@ libfprint (1:1.90.6+tod1-0ubuntu1) hirsute; urgency=medium
   * debian/rules: sync with debian (no change)
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 10 Dec 2020 17:26:27 +0100
+
+libfprint (1:1.90.6-2) unstable; urgency=medium
+
+  * d/p/meson-Do-not-support-drivers-known-to-fail-in-Big-Endian-.patch:
+    - Do not enable drivers that are not supported by big endian archs
+      Upstream patch to only build drivers everywhere but not include them
+      in the supported list or test them
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 10 Dec 2020 21:32:49 +0100
+
+libfprint (1:1.90.6-1) unstable; urgency=medium
+
+  * New upstream release:
+    - fp_print_deserialize will now correctly return a sunken reference
+    - Object reference management fixes for FpPrint and identify
+    - Fixed issues that caused problem on non-x86 machines (#236)
+    - Fix building with older GLib versions
+    - synaptics: Support PID 00e7
+    - goodix: Fix issue with long USB packages
+  * debian/control:
+    - Remove Didier Raboud from uploaders (as he requested via bigon).
+    - Mark libfprint-2-doc as Multi-Arch: foreign
+  * debian/rules:
+    - Ignore tests failures in s390x as it now builds and tests correctly
+    - Increase testing timeout.
+  * debian/{control,rules,*.install}:
+    - Switch to debhelper 13 and use its features.
+      As per this restrict more the .install files wilcards
+  * debian/gbp.conf: Include suggested settings by GNOME team.
+    - Even if libfprint is not part of GNOME I think these settings are good
+      practice anyways.
+  * debian/patches:
+    - Refresh
+    - Add upstream patch to avoid nbis library warnings.
+      These have been checked to be harmless upstream
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 10 Dec 2020 15:58:37 +0100
 
 libfprint (1:1.90.5+tod1-0ubuntu1) hirsute; urgency=medium
 
@@ -55,6 +144,54 @@ libfprint (1:1.90.5+tod1-0ubuntu1) hirsute; urgency=medium
     - Use gbp pq topics for debian-specific patches
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 04 Dec 2020 03:57:04 +0100
+
+libfprint (1:1.90.5-2) unstable; urgency=medium
+
+  * d/p/fpi-device-Return-proper-type-on-identification-success.patch,
+    d/p/test-fpi-device-Always-check-the-return-values-for-the-AP.patch:
+    - Properly handle identify return value and add tests.
+      This fixes fprintd test failures in s390x
+  * d/p/fp-print-Don-t-byte-swap-two-times-the-NBIS-array-content.patch:
+    - Fixes virtual-image test in libfprint for s390x
+  * debian/control: Add myself to Uploaders
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 02 Dec 2020 17:53:32 +0100
+
+libfprint (1:1.90.5-1) unstable; urgency=medium
+
+  * New upstream release:
+    - Remove USB hub from udev autosupend rules
+    - synaptics: Add PID 0x00c9 which is used in some HP laptops
+  * debian/patches: Use gbp pq topics for debian-specific patches
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 02 Dec 2020 05:11:33 +0100
+
+libfprint (1:1.90.4-1) unstable; urgency=medium
+
+  * Team upload.
+  [ Marco Trevisan (Treviño) ]
+  * New upstream release:
+    - Work around GUsb cancellation issue
+    - Redefine internal image device state machine for more robustness
+    - Add public finger-status reporting to FpDevice
+    - Rework device removal API to be convenient
+    - Enable powersave for unsupported USB devices (LP: #1905603)
+    - Improvements to examples
+    - synaptics: Support identify operation (LP: #1905600)
+    - synaptics: Fix possible crash when the interrupt transfer is resubmitted
+    - synaptics: Add support for PIDs 0x00f9, 0x00fc and 0x00c2
+    - elan: Add PID 0x0c4d to supported device list
+    - aes3k: Fix driver and add CI test (LP: #1897613)
+    - uru4000: Fix reference counting of image transfer
+    - vfs301: Fix driver and add CI test (LP: #1905597, Closes: #951648)
+  * debian/libfprint-2-2.symbols: Add new symbols
+  * debian/rules: Also build the virtual drivers, as they're useful for
+    testing libfprint and fprintd
+
+  [ Laurent Bigonville ]
+  * debian/control: Bump Standards-Version to 4.5.1 (no further changes)
+
+ -- Laurent Bigonville <bigon@debian.org>  Tue, 01 Dec 2020 11:36:08 +0100
 
 libfprint (1:1.90.3+tod1-0ubuntu3) hirsute; urgency=medium
 
@@ -91,6 +228,25 @@ libfprint (1:1.90.3+tod1-0ubuntu1) groovy; urgency=medium
   * debian/libfprint-2-tod1.symbols: Added new GType symbols
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 24 Sep 2020 06:14:30 +0200
+
+libfprint (1:1.90.3-1) unstable; urgency=medium
+
+  * Team upload.
+  [ Marco Trevisan (Treviño) ]
+  * New upstream release
+    - Fixed crash in VFS0050 (LP: #1876502)
+    - Enrollment fails with UPEK reader (LP: #1881380)
+    - Lots of various drivers fixes
+    - As per a patch for nbis required for some sensors that was accidentally
+      dropped in an earlier release. Users of sensors/drivers aes1610, aes2501,
+      aes2550, aes1660, aes2660, elan, upektc_img) need to re-enroll
+  * d/p/git_reading_pointer.patch:
+    - Dopped (applied upstream)
+
+  [ Laurent Bigonville ]
+  * New upstream release
+
+ -- Laurent Bigonville <bigon@debian.org>  Sun, 15 Nov 2020 16:05:30 +0100
 
 libfprint (1:1.90.2+tod1-0ubuntu1) groovy; urgency=medium
 
@@ -149,6 +305,7 @@ libfprint (1:1.90.1+tod1-0ubuntu1) focal; urgency=medium
 
 libfprint (1:1.90.1-2) experimental; urgency=medium
 
+  * Team upload.
   [ Laurent Bigonville ]
   * debian/control: Add libcairo-dev and python3 to build-dependencies as they
     are explicitly required for some tests
