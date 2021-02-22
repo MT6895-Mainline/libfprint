@@ -45,12 +45,9 @@ static const FpIdEntry whitelist_id_table[] = {
   { .vid = 0x06cb, .pid = 0x00b7 },
   { .vid = 0x06cb, .pid = 0x00bb },
   { .vid = 0x06cb, .pid = 0x00be },
-  { .vid = 0x06cb, .pid = 0x00c2 },
-  { .vid = 0x06cb, .pid = 0x00c9 },
   { .vid = 0x06cb, .pid = 0x00cb },
   { .vid = 0x06cb, .pid = 0x00d8 },
   { .vid = 0x06cb, .pid = 0x00da },
-  { .vid = 0x06cb, .pid = 0x00e7 },
   { .vid = 0x0a5c, .pid = 0x5801 },
   { .vid = 0x0a5c, .pid = 0x5805 },
   { .vid = 0x0a5c, .pid = 0x5834 },
@@ -110,6 +107,7 @@ static const FpIdEntry blacklist_id_table[] = {
 static const FpDeviceClass whitelist = {
   .type = FP_DEVICE_TYPE_USB,
   .id_table = whitelist_id_table,
+  .id = "whitelist",
   .full_name = "Hardcoded whitelist"
 };
 
@@ -140,33 +138,56 @@ print_driver (const FpDeviceClass *cls)
 
       if (g_hash_table_lookup (printed, key) != NULL)
         {
+          if (cls == &whitelist)
+            g_warning ("%s implemented by driver %s",
+                       key, (const char *) g_hash_table_lookup (printed, key));
           g_free (key);
           continue;
         }
 
-      g_hash_table_insert (printed, key, GINT_TO_POINTER (1));
+      g_hash_table_insert (printed, key, (void *) cls->id);
 
       if (num_printed == 0)
-        g_print ("# %s\n", cls->full_name);
+        {
+          if (cls != &whitelist)
+            g_print ("\n# Supported by libfprint driver %s\n", cls->id);
+          else
+            g_print ("\n# Known unsupported devices\n");
+        }
 
-      g_print ("SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"%04x\", ATTRS{idProduct}==\"%04x\", ATTRS{dev}==\"*\", TEST==\"power/control\", ATTR{power/control}=\"auto\"\n",
+      g_print ("usb:v%04Xp%04X*\n",
                entry->vid, entry->pid);
-      g_print ("SUBSYSTEM==\"usb\", ATTRS{idVendor}==\"%04x\", ATTRS{idProduct}==\"%04x\", ENV{LIBFPRINT_DRIVER}=\"%s\"\n",
-               entry->vid, entry->pid, cls->full_name);
       num_printed++;
     }
 
   if (num_printed > 0)
-    g_print ("\n");
+    g_print (" ID_AUTOSUSPEND=1\n");
+}
+
+static int
+driver_compare (gconstpointer p1, gconstpointer p2)
+{
+  g_autoptr(FpDeviceClass) cls1 = g_type_class_ref (*(GType *) p1);
+  g_autoptr(FpDeviceClass) cls2 = g_type_class_ref (*(GType *) p2);
+
+  return g_strcmp0 (cls1->id, cls2->id);
 }
 
 int
 main (int argc, char **argv)
 {
   g_autoptr(GArray) drivers = fpi_get_driver_types ();
+  g_autofree char *program_name = NULL;
   guint i;
 
+  program_name = g_path_get_basename (argv[0]);
+
+  g_print ("# SPDX-License-Identifier: LGPL-2.1-or-later\n");
+  g_print ("# This file has been generated using %s with all drivers enabled\n",
+           program_name);
+
   printed = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  g_array_sort (drivers, driver_compare);
 
   for (i = 0; i < drivers->len; i++)
     {

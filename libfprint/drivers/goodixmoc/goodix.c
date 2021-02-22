@@ -53,10 +53,12 @@ struct _FpiDeviceGoodixMoc
   pgxfp_sensor_cfg_t sensorcfg;
   gint               enroll_stage;
   gint               max_enroll_stage;
+  gint               max_stored_prints;
   GCancellable      *cancellable;
   GPtrArray         *list_result;
   guint8             template_id[TEMPLATE_ID_SIZE];
   gboolean           is_enroll_identify;
+  gboolean           is_power_button_shield_on;
 
 };
 
@@ -126,7 +128,7 @@ fp_cmd_receive_cb (FpiUsbTransfer *transfer,
     }
 
   gx_proto_crc32_calc (transfer->buffer, PACKAGE_HEADER_SIZE + header.len, (uint8_t *) &crc32_calc);
-  if(crc32_calc != *(uint32_t *) (transfer->buffer + PACKAGE_HEADER_SIZE + header.len))
+  if(crc32_calc != GUINT32_FROM_LE (*(uint32_t *) (transfer->buffer + PACKAGE_HEADER_SIZE + header.len)))
     {
       fpi_ssm_mark_failed (transfer->ssm,
                            fpi_device_error_new_msg (FP_DEVICE_ERROR_PROTO,
@@ -308,6 +310,35 @@ goodix_sensor_cmd (FpiDeviceGoodixMoc *self,
 
 
 }
+
+/******************************************************************************
+ *
+ *  fp_pwr_btn_shield_cb Function
+ *
+ *****************************************************************************/
+static void
+fp_pwr_btn_shield_cb (FpiDeviceGoodixMoc  *self,
+                      gxfp_cmd_response_t *resp,
+                      GError              *error)
+{
+  if (error)
+    {
+      fpi_ssm_mark_failed (self->task_ssm, error);
+      return;
+    }
+  if (resp->result >= GX_FAILED)
+    {
+      fp_dbg ("Setting power button shield failed, result: 0x%x", resp->result);
+      fpi_ssm_mark_failed (self->task_ssm,
+                           fpi_device_retry_new (FP_DEVICE_RETRY_GENERAL));
+      return;
+    }
+  if (resp->power_button_shield_resp.resp_cmd1 == MOC_CMD1_PWR_BTN_SHIELD_ON)
+    self->is_power_button_shield_on = true;
+  else
+    self->is_power_button_shield_on = false;
+  fpi_ssm_next_state (self->task_ssm);
+}
 /******************************************************************************
  *
  *  fp_verify_xxxx Function
@@ -330,7 +361,9 @@ fp_verify_capture_cb (FpiDeviceGoodixMoc  *self,
                            fpi_device_retry_new (FP_DEVICE_RETRY_GENERAL));
       return;
     }
-
+  fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                           FP_FINGER_STATUS_PRESENT,
+                                           FP_FINGER_STATUS_NONE);
   if (resp->capture_data_resp.img_quality == 0)
     {
       fpi_ssm_mark_failed (self->task_ssm,
@@ -341,6 +374,7 @@ fp_verify_capture_cb (FpiDeviceGoodixMoc  *self,
     {
       fpi_ssm_mark_failed (self->task_ssm,
                            fpi_device_retry_new (FP_DEVICE_RETRY_CENTER_FINGER));
+      return;
     }
   fpi_ssm_next_state (self->task_ssm);
 }
@@ -415,7 +449,7 @@ fp_verify_cb (FpiDeviceGoodixMoc  *self,
         fpi_device_identify_report (device, NULL, NULL, error);
     }
 
-  fpi_ssm_mark_completed (self->task_ssm);
+  fpi_ssm_next_state (self->task_ssm);
 
 }
 
@@ -432,7 +466,18 @@ fp_verify_sm_run_state (FpiSsm *ssm, FpDevice *device)
 
   switch (fpi_ssm_get_cur_state (ssm))
     {
+    case FP_VERIFY_PWR_BTN_SHIELD_ON:
+      goodix_sensor_cmd (self, MOC_CMD0_PWR_BTN_SHIELD, MOC_CMD1_PWR_BTN_SHIELD_ON,
+                         false,
+                         NULL,
+                         0,
+                         fp_pwr_btn_shield_cb);
+      break;
+
     case FP_VERIFY_CAPTURE:
+      fpi_device_report_finger_status_changes (device,
+                                               FP_FINGER_STATUS_NEEDED,
+                                               FP_FINGER_STATUS_NONE);
       goodix_sensor_cmd (self, MOC_CMD0_CAPTURE_DATA, MOC_CMD1_DEFAULT,
                          true,
                          (const guint8 *) &param,
@@ -446,6 +491,14 @@ fp_verify_sm_run_state (FpiSsm *ssm, FpDevice *device)
                          (const guint8 *) nonce,
                          TEMPLATE_ID_SIZE,
                          fp_verify_cb);
+      break;
+
+    case FP_VERIFY_PWR_BTN_SHIELD_OFF:
+      goodix_sensor_cmd (self, MOC_CMD0_PWR_BTN_SHIELD, MOC_CMD1_PWR_BTN_SHIELD_OFF,
+                         false,
+                         NULL,
+                         0,
+                         fp_pwr_btn_shield_cb);
       break;
     }
 
@@ -461,9 +514,9 @@ fp_verify_ssm_done (FpiSsm *ssm, FpDevice *dev, GError *error)
   if (error && error->domain == FP_DEVICE_RETRY)
     {
       if (fpi_device_get_current_action (dev) == FPI_DEVICE_ACTION_VERIFY)
-        fpi_device_verify_report (dev, FPI_MATCH_ERROR, NULL, error);
+        fpi_device_verify_report (dev, FPI_MATCH_ERROR, NULL, g_steal_pointer (&error));
       else
-        fpi_device_identify_report (dev, NULL, NULL, error);
+        fpi_device_identify_report (dev, NULL, NULL, g_steal_pointer (&error));
     }
 
   if (fpi_device_get_current_action (dev) == FPI_DEVICE_ACTION_VERIFY)
@@ -560,6 +613,13 @@ fp_enroll_enum_cb (FpiDeviceGoodixMoc  *self,
                                                      resp->result));
       return;
     }
+  if (resp->finger_list_resp.finger_num >= self->max_stored_prints)
+    {
+      fpi_ssm_mark_failed (self->task_ssm,
+                           fpi_device_error_new (FP_DEVICE_ERROR_DATA_FULL));
+      return;
+    }
+
   fpi_ssm_jump_to_state (self->task_ssm, FP_ENROLL_CAPTURE);
 }
 
@@ -620,7 +680,9 @@ fp_enroll_capture_cb (FpiDeviceGoodixMoc  *self,
       fpi_ssm_jump_to_state (self->task_ssm, FP_ENROLL_CAPTURE);
       return;
     }
-
+  fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                           FP_FINGER_STATUS_PRESENT,
+                                           FP_FINGER_STATUS_NONE);
   if ((resp->capture_data_resp.img_quality < self->sensorcfg->config[4]) ||
       (resp->capture_data_resp.img_coverage < self->sensorcfg->config[5]))
     {
@@ -742,7 +804,7 @@ fp_finger_mode_cb (FpiDeviceGoodixMoc  *self,
       fpi_ssm_mark_failed (self->task_ssm, error);
       return;
     }
-  /* if reach max timeout(5sec) finger not up, swtich to finger up again */
+  /* if reach max timeout(5sec) finger not up, switch to finger up again */
   if (resp->finger_status.status == GX_ERROR_WAIT_FINGER_UP_TIMEOUT)
     {
       fpi_ssm_jump_to_state (self->task_ssm, FP_ENROLL_WAIT_FINGER_UP);
@@ -755,6 +817,9 @@ fp_finger_mode_cb (FpiDeviceGoodixMoc  *self,
                                                      "Switch finger mode failed"));
       return;
     }
+  fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                           FP_FINGER_STATUS_NONE,
+                                           FP_FINGER_STATUS_PRESENT);
   if (self->enroll_stage < self->max_enroll_stage)
     {
       fpi_ssm_jump_to_state (self->task_ssm, FP_ENROLL_CAPTURE);
@@ -793,6 +858,16 @@ fp_enroll_sm_run_state (FpiSsm *ssm, FpDevice *device)
       }
       break;
 
+    case FP_ENROLL_PWR_BTN_SHIELD_ON:
+      {
+        goodix_sensor_cmd (self, MOC_CMD0_PWR_BTN_SHIELD, MOC_CMD1_PWR_BTN_SHIELD_ON,
+                           false,
+                           NULL,
+                           0,
+                           fp_pwr_btn_shield_cb);
+      }
+      break;
+
     case FP_ENROLL_IDENTIFY:
       {
         dummy[0] = 0x01;
@@ -817,6 +892,9 @@ fp_enroll_sm_run_state (FpiSsm *ssm, FpDevice *device)
       break;
 
     case FP_ENROLL_CAPTURE:
+      fpi_device_report_finger_status_changes (device,
+                                               FP_FINGER_STATUS_NEEDED,
+                                               FP_FINGER_STATUS_NONE);
       goodix_sensor_cmd (self, MOC_CMD0_CAPTURE_DATA, MOC_CMD1_DEFAULT,
                          true,
                          (const guint8 *) &dummy,
@@ -904,9 +982,17 @@ fp_enroll_sm_run_state (FpiSsm *ssm, FpDevice *device)
 
       }
       break;
+
+    case FP_ENROLL_PWR_BTN_SHIELD_OFF:
+      {
+        goodix_sensor_cmd (self, MOC_CMD0_PWR_BTN_SHIELD, MOC_CMD1_PWR_BTN_SHIELD_OFF,
+                           false,
+                           NULL,
+                           0,
+                           fp_pwr_btn_shield_cb);
+      }
+      break;
     }
-
-
 }
 
 static void
@@ -975,7 +1061,7 @@ fp_init_config_cb (FpiDeviceGoodixMoc  *self,
       fpi_ssm_mark_failed (self->task_ssm, error);
       return;
     }
-
+  self->max_stored_prints = resp->finger_config.max_stored_prints;
   fpi_ssm_next_state (self->task_ssm);
 }
 
@@ -1259,6 +1345,9 @@ gx_fp_init (FpDevice *device)
   GError *error = NULL;
   int ret = 0;
 
+  self->max_stored_prints = FP_MAX_FINGERNUM;
+  self->is_power_button_shield_on = false;
+
   self->cancellable = g_cancellable_new ();
 
   self->sensorcfg = g_new0 (gxfp_sensor_cfg_t, 1);
@@ -1293,20 +1382,59 @@ gx_fp_init (FpDevice *device)
 }
 
 static void
-gx_fp_exit (FpDevice *device)
+gx_fp_release_interface (FpiDeviceGoodixMoc *self,
+                         GError             *error)
 {
-  FpiDeviceGoodixMoc *self = FPI_DEVICE_GOODIXMOC (device);
-  GError *error = NULL;
+  g_autoptr(GError) release_error = NULL;
 
   g_clear_object (&self->cancellable);
   g_clear_pointer (&self->sensorcfg, g_free);
 
   /* Release usb interface */
-  g_usb_device_release_interface (fpi_device_get_usb_device (FP_DEVICE (device)),
-                                  0, 0, &error);
+  g_usb_device_release_interface (fpi_device_get_usb_device (FP_DEVICE (self)),
+                                  0, 0, &release_error);
+  /* Retain passed error if set, otherwise propagate error from release. */
+  if (error == NULL)
+    error = g_steal_pointer (&release_error);
 
   /* Notify close complete */
   fpi_device_close_complete (FP_DEVICE (self), error);
+
+}
+
+static void
+gx_fp_exit_cb (FpiDeviceGoodixMoc  *self,
+               gxfp_cmd_response_t *resp,
+               GError              *error)
+{
+
+
+  if (resp->result >= GX_FAILED)
+    fp_dbg ("Setting power button shield failed, result: 0x%x", resp->result);
+  self->is_power_button_shield_on = false;
+  gx_fp_release_interface (self, error);
+}
+
+static void
+gx_fp_exit (FpDevice *device)
+{
+  FpiDeviceGoodixMoc *self = FPI_DEVICE_GOODIXMOC (device);
+
+  if (self->is_power_button_shield_on)
+    {
+      goodix_sensor_cmd (self,
+                         MOC_CMD0_PWR_BTN_SHIELD,
+                         MOC_CMD1_PWR_BTN_SHIELD_OFF,
+                         false,
+                         NULL,
+                         0,
+                         gx_fp_exit_cb);
+    }
+  else
+    {
+      gx_fp_release_interface (self, NULL);
+    }
+
 }
 
 
@@ -1408,7 +1536,6 @@ fpi_device_goodixmoc_init (FpiDeviceGoodixMoc *self)
 static void
 gx_fp_cancel (FpDevice *device)
 {
-
   FpiDeviceGoodixMoc *self = FPI_DEVICE_GOODIXMOC (device);
 
   /* Cancel any current interrupt transfer (resulting us to go into
@@ -1424,6 +1551,9 @@ static const FpIdEntry id_table[] = {
   { .vid = 0x27c6,  .pid = 0x5840,  },
   { .vid = 0x27c6,  .pid = 0x6496,  },
   { .vid = 0x27c6,  .pid = 0x60A2,  },
+  { .vid = 0x27c6,  .pid = 0x63AC,  },
+  { .vid = 0x27c6,  .pid = 0x639C,  },
+  { .vid = 0x27c6,  .pid = 0x6594,  },
   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */
 };
 

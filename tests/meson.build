@@ -5,6 +5,7 @@ envs.set('G_MESSAGES_DEBUG', 'all')
 
 # Setup paths
 envs.set('MESON_SOURCE_ROOT', meson.source_root())
+envs.set('MESON_BUILD_ROOT', meson.build_root())
 envs.prepend('LD_LIBRARY_PATH', join_paths(meson.build_root(), 'libfprint'))
 
 # Set FP_DEVICE_EMULATION so that drivers can adapt (e.g. to use fixed
@@ -12,7 +13,11 @@ envs.prepend('LD_LIBRARY_PATH', join_paths(meson.build_root(), 'libfprint'))
 envs.set('FP_DEVICE_EMULATION', '1')
 
 # Set a colon-separated list of native drivers we enable in tests
-envs.set('FP_DRIVERS_WHITELIST', 'virtual_image')
+envs.set('FP_DRIVERS_WHITELIST', ':'.join([
+    'virtual_image',
+    'virtual_device',
+    'virtual_device_storage',
+]))
 
 envs.set('NO_AT_BRIDGE', '1')
 
@@ -28,49 +33,58 @@ drivers_tests = [
 
 if get_option('introspection')
     envs.prepend('GI_TYPELIB_PATH', join_paths(meson.build_root(), 'libfprint'))
+    virtual_devices_tests = [
+        'virtual-image',
+        'virtual-device',
+    ]
 
-    if 'virtual_image' in drivers
-        python3 = find_program('python3')
-        unittest_inspector = find_program('unittest_inspector.py')
-        base_args = files('virtual-image.py')
-        suite = []
+    unittest_inspector = find_program('unittest_inspector.py')
 
-        r = run_command(unittest_inspector, files('virtual-image.py'))
-        unit_tests = r.stdout().strip().split('\n')
+    foreach vdtest: virtual_devices_tests
+        driver_name = '_'.join(vdtest.split('-'))
+        if driver_name in drivers
+            python3 = find_program('python3')
+            base_args = files(vdtest + '.py')
+            suite = ['virtual-driver']
 
-        if r.returncode() == 0 and unit_tests.length() > 0
-            suite += 'virtual-image'
-        else
-            unit_tests = ['virtual-image']
-        endif
+            r = run_command(unittest_inspector, files(vdtest + '.py'))
+            unit_tests = r.stdout().strip().split('\n')
 
-        foreach ut: unit_tests
-            ut_suite = suite
-            ut_args = base_args
-            if unit_tests.length() > 1
-                ut_args += ut
-                ut_suite += ut.split('.')[0]
+            if r.returncode() == 0 and unit_tests.length() > 0
+                suite += vdtest
+            else
+                unit_tests = [vdtest]
             endif
-            test(ut,
-                python3,
-                args: ut_args,
-                suite: ut_suite,
-                depends: libfprint_typelib,
-                env: envs,
+
+            foreach ut: unit_tests
+                ut_suite = suite
+                ut_args = base_args
+                if unit_tests.length() > 1
+                    ut_args += ut
+                    ut_suite += ut.split('.')[0]
+                endif
+                test(ut,
+                    python3,
+                    args: ut_args,
+                    suite: ut_suite,
+                    depends: libfprint_typelib,
+                    env: envs,
+                )
+            endforeach
+        else
+            test(vdtest,
+                find_program('sh'),
+                args: ['-c', 'exit 77']
             )
-        endforeach
-    else
-        test('virtual-image',
-            find_program('sh'),
-            args: ['-c', 'exit 77']
-        )
-    endif
+        endif
+    endforeach
 
     foreach driver_test: drivers_tests
         driver_envs = envs
         driver_envs.set('FP_DRIVERS_WHITELIST', driver_test)
 
-        if driver_test in drivers and gusb_dep.version().version_compare('>= 0.3.0')
+        if (driver_test in supported_drivers and
+            gusb_dep.version().version_compare('>= 0.3.0'))
             test(driver_test,
                 find_program('umockdev-test.py'),
                 args: join_paths(meson.current_source_dir(), driver_test),
@@ -168,6 +182,13 @@ foreach test_name: unit_tests
     )
 endforeach
 
+# Run udev rule generator with fatal warnings
+envs.set('UDEV_HWDB', udev_hwdb.full_path())
+envs.set('UDEV_HWDB_CHECK_CONTENTS', default_drivers_are_enabled ? '1' : '0')
+test('udev-hwdb',
+     find_program('test-generated-hwdb.sh'),
+     env: envs)
+
 gdb = find_program('gdb', required: false)
 if gdb.found()
     add_test_setup('gdb',
@@ -188,6 +209,7 @@ if valgrind.found()
         timeout_multiplier: 10,
         env: [
             'G_SLICE=always-malloc',
+            'UNDER_VALGRIND=1',
             ('LIBFPRINT_TEST_WRAPPER=@0@ --tool=memcheck --leak-check=full ' +
              '--suppressions=@1@ --suppressions=@2@').format(
                 valgrind.path(), glib_suppressions, python_suppressions)
