@@ -75,6 +75,11 @@
 #define MOC_CMD1_GET_FINGER_MODE 0x00
 #define MOC_CMD1_SET_FINGER_DOWN 0x01
 #define MOC_CMD1_SET_FINGER_UP 0x02
+
+#define MOC_CMD0_PWR_BTN_SHIELD 0xE0
+#define MOC_CMD1_PWR_BTN_SHIELD_OFF 0x00
+#define MOC_CMD1_PWR_BTN_SHIELD_ON 0x01
+
 /* */
 
 typedef struct _gxfp_version_info
@@ -89,7 +94,7 @@ typedef struct _gxfp_version_info
   uint8_t interface[GX_VERSION_LEN];
   uint8_t protocol[GX_VERSION_LEN];
   uint8_t flashVersion[GX_VERSION_LEN];
-  uint8_t reserved[62];
+  uint8_t reserved[38];
 } gxfp_version_info_t, *pgxfp_version_info_t;
 
 
@@ -173,6 +178,11 @@ typedef struct _fp_finger_config
   uint8_t max_stored_prints;
 } fp_finger_config_t, *pfp_finger_config_t;
 
+typedef struct _fp_pwr_btn_shield
+{
+  uint8_t resp_cmd1;
+} fp_pwr_btn_shield_t, *pfp_pwr_btn_shield_t;
+
 typedef struct _fp_cmd_response
 {
   uint8_t result;
@@ -189,6 +199,7 @@ typedef struct _fp_cmd_response
     gxfp_version_info_t    version_info;
     fp_finger_status_t     finger_status;
     fp_finger_config_t     finger_config;
+    fp_pwr_btn_shield_t    power_button_shield_resp;
   };
 } gxfp_cmd_response_t, *pgxfp_cmd_response_t;
 
@@ -225,7 +236,7 @@ int gx_proto_parse_header (uint8_t     *buffer,
 
 int gx_proto_parse_body (uint16_t             cmd,
                          uint8_t             *buffer,
-                         uint32_t             buffer_len,
+                         uint16_t             buffer_len,
                          pgxfp_cmd_response_t presponse);
 
 int gx_proto_init_sensor_config (pgxfp_sensor_cfg_t pconfig);

@@ -1,5 +1,5 @@
 project('libfprint', [ 'c', 'cpp' ],
-    version: '1.90.7',
+    version: '1.90.7+git20210222+tod1',
     license: 'LGPLv2.1+',
     default_options: [
         'buildtype=debugoptimized',
@@ -88,7 +88,12 @@ cairo_dep = dependency('cairo', required: false)
 
 # Drivers
 drivers = get_option('drivers').split(',')
-virtual_drivers = [ 'virtual_image' ]
+virtual_drivers = [
+    'virtual_image',
+    'virtual_device',
+    'virtual_device_storage',
+]
+
 default_drivers = [
     'upektc_img',
     'vfs5011',
@@ -113,6 +118,13 @@ default_drivers = [
     'goodixmoc',
 ]
 
+# FIXME: All the drivers should be fixed by adjusting the byte order.
+# See https://gitlab.freedesktop.org/libfprint/libfprint/-/issues/236
+endian_independent_drivers = virtual_drivers + [
+    'aes3500',
+    'synaptics',
+]
+
 all_drivers = default_drivers + virtual_drivers
 
 if drivers == [ 'all' ]
@@ -125,6 +137,18 @@ endif
 
 if drivers.length() == 0 or drivers[0] == ''
     error('Cannot build libfprint without drivers, please specify a valid value for the drivers option')
+endif
+
+if drivers == all_drivers or drivers == default_drivers
+    default_drivers_are_enabled = true
+else
+    default_drivers_are_enabled = true
+    foreach driver: default_drivers
+        if driver not in drivers
+            default_drivers_are_enabled = false
+            break
+        endif
+    endforeach
 endif
 
 nss_dep = dependency('', required: false)
@@ -150,6 +174,20 @@ foreach driver: drivers
     endif
 endforeach
 
+supported_drivers = []
+foreach driver: drivers
+    if build_machine.endian() == 'little' or driver in endian_independent_drivers
+        supported_drivers += driver
+    else
+        warning('Driver @0@ is not supported by big endian cpu @1@. Please, fix it!'.format(
+            driver, build_machine.cpu()))
+    endif
+endforeach
+
+if default_drivers_are_enabled and supported_drivers != drivers
+    default_drivers_are_enabled = false
+endif
+
 # Export the drivers' types to the core code
 drivers_type_list = []
 drivers_type_func = []
@@ -162,7 +200,7 @@ drivers_type_func += '{'
 drivers_type_func += '  GArray *drivers = g_array_new (TRUE, FALSE, sizeof (GType));'
 drivers_type_func += '  GType t;'
 drivers_type_func += ''
-foreach driver: drivers
+foreach driver: supported_drivers
     drivers_type_list += 'extern GType (fpi_device_' + driver + '_get_type) (void);'
     drivers_type_func += '  t = fpi_device_' + driver + '_get_type ();'
     drivers_type_func += '  g_array_append_val (drivers, t);'
@@ -175,12 +213,14 @@ drivers_type_func += '}'
 root_inc = include_directories('.')
 
 if get_option('udev_rules')
-    udev_rules_dir = get_option('udev_rules_dir')
+    udev_hwdb_dir = get_option('udev_hwdb_dir')
 
-    if udev_rules_dir == 'auto'
+    if udev_hwdb_dir == 'auto'
         udev_dep = dependency('udev')
-        udev_rules_dir = udev_dep.get_pkgconfig_variable('udevdir') + '/rules.d'
+        udev_hwdb_dir = udev_dep.get_pkgconfig_variable('udevdir') + '/hwdb.d'
     endif
+else
+    udev_hwdb_dir = false
 endif
 
 if get_option('gtk-examples')
@@ -206,6 +246,7 @@ if get_option('gtk-examples')
     subdir('demo')
 endif
 
+subdir('data')
 subdir('tests')
 
 pkgconfig = import('pkgconfig')

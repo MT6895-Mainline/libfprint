@@ -185,7 +185,7 @@ fp_device_get_property (GObject    *object,
   switch (prop_id)
     {
     case PROP_NR_ENROLL_STAGES:
-      g_value_set_int (value, priv->nr_enroll_stages);
+      g_value_set_uint (value, priv->nr_enroll_stages);
       break;
 
     case PROP_SCAN_TYPE:
@@ -197,7 +197,7 @@ fp_device_get_property (GObject    *object,
       break;
 
     case PROP_DRIVER:
-      g_value_set_static_string (value, FP_DEVICE_GET_CLASS (priv)->id);
+      g_value_set_static_string (value, FP_DEVICE_GET_CLASS (self)->id);
       break;
 
     case PROP_DEVICE_ID:
@@ -979,7 +979,7 @@ fp_device_verify_finish (FpDevice     *device,
 
       data = g_task_get_task_data (G_TASK (result));
 
-      *print = data->print;
+      *print = data ? data->print : NULL;
       if (*print)
         g_object_ref (*print);
     }
@@ -1092,13 +1092,13 @@ fp_device_identify_finish (FpDevice     *device,
 
   if (print)
     {
-      *print = data->print;
+      *print = data ? data->print : NULL;
       if (*print)
         g_object_ref (*print);
     }
   if (match)
     {
-      *match = data->match;
+      *match = data ? data->match : NULL;
       if (*match)
         g_object_ref (*match);
     }

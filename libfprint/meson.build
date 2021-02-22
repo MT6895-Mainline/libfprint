@@ -155,6 +155,15 @@ foreach driver: drivers
     if driver == 'virtual_image'
         drivers_sources += [ 'drivers/virtual-image.c' ]
     endif
+    if driver == 'virtual_device'
+        drivers_sources += [ 'drivers/virtual-device.c' ]
+    endif
+    if driver == 'virtual_device_storage'
+        drivers_sources += [ 'drivers/virtual-device-storage.c' ]
+    endif
+    if driver.startswith('virtual_')
+        drivers_sources += [ 'drivers/virtual-device-listener.c' ]
+    endif
     if driver == 'synaptics'
     drivers_sources += [
         'drivers/synaptics/synaptics.c',
@@ -262,7 +271,7 @@ libfprint_drivers = static_library('fprint-drivers',
 mapfile = files('libfprint.ver')
 vflag = '-Wl,--version-script,@0@/@1@'.format(meson.source_root(), mapfile[0])
 
-libfprint = library(versioned_libname.split('lib')[1],
+libfprint = shared_library(versioned_libname.split('lib')[1],
     sources: [
         fp_enums,
         libfprint_sources,
@@ -299,20 +308,30 @@ libfprint_private_dep = declare_dependency(
     ]
 )
 
-udev_rules = executable('fprint-list-udev-rules',
-    'fprint-list-udev-rules.c',
+udev_hwdb = executable('fprint-list-udev-hwdb',
+    'fprint-list-udev-hwdb.c',
     dependencies: libfprint_private_dep,
     link_with: libfprint_drivers,
     install: false)
 
-if get_option('udev_rules')
-    custom_target('udev-rules',
-        output: '60-@0@-autosuspend.rules'.format(versioned_libname),
-        capture: true,
-        command: [ udev_rules ],
-        install: true,
-        install_dir: udev_rules_dir)
-endif
+udev_hwdb_generator = custom_target('udev-hwdb',
+    output: 'autosuspend.hwdb',
+    depend_files: drivers_sources,
+    capture: true,
+    command: [ udev_hwdb ],
+    install: false,
+)
+
+custom_target('sync-udev-hwdb',
+    depends: udev_hwdb_generator,
+    output: 'sync-udev-hwdb',
+    install: false,
+    command: [
+        'cp', '-v',
+        udev_hwdb_generator.full_path(),
+        meson.source_root() / 'data'
+    ]
+)
 
 supported_devices = executable('fprint-list-supported-devices',
     'fprint-list-supported-devices.c',
