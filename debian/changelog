@@ -1,9 +1,16 @@
-libfprint (1:1.90.7+git20210222+tod1-1) UNRELEASED; urgency=medium
+libfprint (1:1.90.7+git20210222+tod1-0ubuntu1) UNRELEASED; urgency=medium
 
-  * New upstream release
+  * New upstream TOD release
+  * Merge common packaging bits with debian
   * debian/libfprint-2-2.postinst: Devices triggers updated
+  * debian/patches: Drop, they're all applied upstream
+  * debian/libfprint-2-2.symbols: Update symbols
+  * debian/update-udev-triggers.sh: Ignore udevadm trigger failures
+    (LP: #1909023)
+  * debian/libfprint-2-2.postinst: Regenerate as per generator changes
+    (LP: #1909023)
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 22 Feb 2021 20:42:15 +0100
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 22 Feb 2021 21:38:32 +0100
 
 libfprint (1:1.90.7-3) experimental; urgency=medium
 
