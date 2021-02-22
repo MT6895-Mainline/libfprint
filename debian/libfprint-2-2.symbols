@@ -45,6 +45,13 @@ libfprint-2.so.2 libfprint-2-2 #MINVER#
  fp_device_verify@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_verify_finish@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_verify_sync@LIBFPRINT_2.0.0 1:1.90.1
+ fp_device_virtual_listener_connection_close@LIBFPRINT_2.0.0 1:1.90.7+git20210222+tod1
+ fp_device_virtual_listener_get_type@LIBFPRINT_2.0.0 1:1.90.7+git20210222+tod1
+ fp_device_virtual_listener_new@LIBFPRINT_2.0.0 1:1.90.7+git20210222+tod1
+ fp_device_virtual_listener_read@LIBFPRINT_2.0.0 1:1.90.7+git20210222+tod1
+ fp_device_virtual_listener_read_finish@LIBFPRINT_2.0.0 1:1.90.7+git20210222+tod1
+ fp_device_virtual_listener_start@LIBFPRINT_2.0.0 1:1.90.7+git20210222+tod1
+ fp_device_virtual_listener_write_sync@LIBFPRINT_2.0.0 1:1.90.7+git20210222+tod1
  fp_finger_get_type@LIBFPRINT_2.0.0 1:1.90.1
  fp_finger_status_flags_get_type@LIBFPRINT_2.0.0 1:1.90.4
  fp_image_detect_minutiae@LIBFPRINT_2.0.0 1:1.90.1
