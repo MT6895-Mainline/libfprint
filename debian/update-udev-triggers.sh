@@ -3,7 +3,7 @@ set -e
 
 srcdir="${GBP_SOURCES_DIR:-.}"
 debpath="$(dirname "$0")"
-autosuspend_file="/tmp/autosuspend.hwdb"
+autosuspend_file="$srcdir/data/autosuspend.hwdb"
 commands_lines=()
 
 while IFS= read -r line; do
