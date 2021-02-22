@@ -10,7 +10,7 @@ while IFS= read -r line; do
     if [[ $line =~ ^usb:v([A-Fa-f0-9]{4})p([A-Fa-f0-9]{4}) ]]; then
         vendor="$(echo "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')"
         product="$(echo "${BASH_REMATCH[2]}" | tr '[:upper:]' '[:lower:]')"
-        commands_lines+=("\tudevadm trigger --action=add --attr-match=idVendor=$vendor --attr-match=idProduct=$product")
+        commands_lines+=("\tudevadm trigger --action=add --attr-match=idVendor=$vendor --attr-match=idProduct=$product || true")
     fi
 done < "$autosuspend_file"
 
