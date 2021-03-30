@@ -1,5 +1,7 @@
 #!/usr/bin/make -f
 
+export DEB_BUILD_MAINT_OPTIONS = optimize=-lto
+
 export DPKG_GENSYMBOLS_CHECK_LEVEL = 2
 
 BUILDDIR = $(CURDIR)/obj-$(DEB_HOST_GNU_TYPE)

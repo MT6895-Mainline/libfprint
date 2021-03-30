@@ -1,3 +1,10 @@
+libfprint (1:1.90.7+git20210222+tod1-0ubuntu2) hirsute; urgency=medium
+
+  * Disable lto for now, failing test
+    ibfprint:unit-tests+tod+fake_test_dev_tod_current / fpi-device-tod-fake_test_dev_tod_current
+
+ -- Matthias Klose <doko@ubuntu.com>  Tue, 30 Mar 2021 15:01:02 +0200
+
 libfprint (1:1.90.7+git20210222+tod1-0ubuntu1) hirsute; urgency=medium
 
   * New upstream TOD release
