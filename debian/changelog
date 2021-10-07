@@ -1,3 +1,9 @@
+libfprint (1:1.90.7+git20210222+tod1-0ubuntu3) impish; urgency=medium
+
+  * No-change rebuild to build packages with zstd compression.
+
+ -- Matthias Klose <doko@ubuntu.com>  Thu, 07 Oct 2021 12:15:26 +0200
+
 libfprint (1:1.90.7+git20210222+tod1-0ubuntu2) hirsute; urgency=medium
 
   * Disable lto for now, failing test
