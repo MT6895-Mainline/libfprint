@@ -1,0 +1,36 @@
+From: Benjamin Berg <bberg@redhat.com>
+Date: Wed, 28 Apr 2021 15:23:49 +0200
+Subject: elan: Add PID 0c3d
+
+Users are reporting that the sensor works fine.
+
+Closes: #214
+---
+ data/autosuspend.hwdb    | 1 +
+ libfprint/drivers/elan.h | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index 98f391a..b763f80 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -118,6 +118,7 @@ usb:v04F3p0C30*
+ usb:v04F3p0C31*
+ usb:v04F3p0C32*
+ usb:v04F3p0C33*
++usb:v04F3p0C3D*
+ usb:v04F3p0C42*
+ usb:v04F3p0C4D*
+  ID_AUTOSUSPEND=1
+diff --git a/libfprint/drivers/elan.h b/libfprint/drivers/elan.h
+index 989778e..4b93cab 100644
+--- a/libfprint/drivers/elan.h
++++ b/libfprint/drivers/elan.h
+@@ -213,6 +213,7 @@ static const FpIdEntry elan_id_table[] = {
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c31, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c32, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c33, .driver_data = ELAN_ALL_DEV},
++  {.vid = ELAN_VEND_ID,  .pid = 0x0c3d, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c42, .driver_data = ELAN_0C42},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c4d, .driver_data = ELAN_ALL_DEV},
+   {.vid = 0,  .pid = 0,  .driver_data = 0},

@@ -1,0 +1,33 @@
+From: mozgovoy <mozgovoy@playkot.com>
+Date: Thu, 29 Jul 2021 20:40:07 +0300
+Subject: elan: Add PID 0x0c58
+
+---
+ data/autosuspend.hwdb    | 1 +
+ libfprint/drivers/elan.h | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index b9ec5da..e46f172 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -124,6 +124,7 @@ usb:v04F3p0C4D*
+ usb:v04F3p0C4F*
+ usb:v04F3p0C63*
+ usb:v04F3p0C6E*
++usb:v04F3p0C58*
+  ID_AUTOSUSPEND=1
+ 
+ # Supported by libfprint driver etes603
+diff --git a/libfprint/drivers/elan.h b/libfprint/drivers/elan.h
+index e14977e..33f3aef 100644
+--- a/libfprint/drivers/elan.h
++++ b/libfprint/drivers/elan.h
+@@ -219,6 +219,7 @@ static const FpIdEntry elan_id_table[] = {
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c4f, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c63, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c6e, .driver_data = ELAN_ALL_DEV},
++  {.vid = ELAN_VEND_ID,  .pid = 0x0c58, .driver_data = ELAN_ALL_DEV},
+   {.vid = 0,  .pid = 0,  .driver_data = 0},
+ };
+ 

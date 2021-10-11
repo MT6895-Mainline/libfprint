@@ -1,0 +1,15 @@
+goodixmoc-Add-PID-6A94.patch
+goodixmoc-Remove-internal-cancellable.patch
+goodixmoc-add-PID-609C-6584-658C-6592-659C.patch
+goodixmoc-add-PID-63BC.patch
+goodixmoc-Returned-device-print-matched-by-verify-identif.patch
+synaptics-Remove-usb-reset.patch
+synaptics-add-new-PID-0x100-and-remove-PID-0xE7.patch
+synaptics-Keep-supporting-0xE7.patch
+synaptics-Send-a-cancel-to-sensor-if-it-returns-busy.patch
+synaptics-Fix-warning-about-missing-initialization.patch
+elan-Add-PID-0c3d.patch
+elan-Add-PID-0c4f.patch
+elan-Add-PID-0c63.patch
+Added-ELAN-0c6e-from-ROG-Flow-X13.patch
+elan-Add-PID-0x0c58.patch

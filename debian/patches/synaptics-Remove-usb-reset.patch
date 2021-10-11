@@ -1,0 +1,44 @@
+From: Aris Lin <Aris.Lin@synaptics.com>
+Date: Thu, 25 Feb 2021 17:13:56 +0800
+Subject: synaptics: Remove usb reset
+
+It will trigger firmware to do some activities, remove it in device open
+and device probe.
+---
+ libfprint/drivers/synaptics/synaptics.c | 9 ++-------
+ 1 file changed, 2 insertions(+), 7 deletions(-)
+
+diff --git a/libfprint/drivers/synaptics/synaptics.c b/libfprint/drivers/synaptics/synaptics.c
+index b2db9bd..0de54a1 100644
+--- a/libfprint/drivers/synaptics/synaptics.c
++++ b/libfprint/drivers/synaptics/synaptics.c
+@@ -1158,7 +1158,8 @@ prob_msg_cb (FpiDeviceSynaptics *self,
+                                                  g_usb_device_get_serial_number_index (usb_dev),
+                                                  &error);
+ 
+-  if (resp->result == BMKT_SUCCESS)
++  /* BMKT_OPERATION_DENIED is returned if the sensor is already initialized */
++  if (resp->result == BMKT_SUCCESS || resp->result == BMKT_OPERATION_DENIED)
+     {
+       g_usb_device_close (usb_dev, NULL);
+       fpi_device_probe_complete (FP_DEVICE (self), serial, NULL, error);
+@@ -1196,9 +1197,6 @@ dev_probe (FpDevice *device)
+       return;
+     }
+ 
+-  if (!g_usb_device_reset (usb_dev, &error))
+-    goto err_close;
+-
+   if (!g_usb_device_claim_interface (usb_dev, 0, 0, &error))
+     goto err_close;
+ 
+@@ -1342,9 +1340,6 @@ dev_init (FpDevice *device)
+ 
+   self->interrupt_cancellable = g_cancellable_new ();
+ 
+-  if (!g_usb_device_reset (fpi_device_get_usb_device (device), &error))
+-    goto error;
+-
+   /* Claim usb interface */
+   if (!g_usb_device_claim_interface (fpi_device_get_usb_device (device), 0, 0, &error))
+     goto error;

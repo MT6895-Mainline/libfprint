@@ -1,0 +1,42 @@
+From: boger <boger@goodix.com>
+Date: Fri, 17 Sep 2021 19:28:51 +0800
+Subject: goodixmoc: add PID 63BC 63BC: Dell XPS series fingerprint sensor
+
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/libfprint/+bug/1945298
+---
+ data/autosuspend.hwdb                | 1 +
+ libfprint/drivers/goodixmoc/goodix.c | 2 ++
+ 2 files changed, 3 insertions(+)
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index 38e9d17..a09ed91 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -132,6 +132,7 @@ usb:v27C6p609C*
+ usb:v27C6p60A2*
+ usb:v27C6p639C*
+ usb:v27C6p63AC*
++usb:v27C6p63BC*
+ usb:v27C6p6496*
+ usb:v27C6p6584*
+ usb:v27C6p658C*
+diff --git a/libfprint/drivers/goodixmoc/goodix.c b/libfprint/drivers/goodixmoc/goodix.c
+index 667efb0..96e7157 100644
+--- a/libfprint/drivers/goodixmoc/goodix.c
++++ b/libfprint/drivers/goodixmoc/goodix.c
+@@ -1320,6 +1320,7 @@ gx_fp_probe (FpDevice *device)
+     case 0x609C:
+     case 0x639C:
+     case 0x63AC:
++    case 0x63BC:
+     case 0x6A94:
+       self->max_enroll_stage = 12;
+       break;
+@@ -1539,6 +1540,7 @@ static const FpIdEntry id_table[] = {
+   { .vid = 0x27c6,  .pid = 0x60A2,  },
+   { .vid = 0x27c6,  .pid = 0x639C,  },
+   { .vid = 0x27c6,  .pid = 0x63AC,  },
++  { .vid = 0x27c6,  .pid = 0x63BC,  },
+   { .vid = 0x27c6,  .pid = 0x6496,  },
+   { .vid = 0x27c6,  .pid = 0x6584,  },
+   { .vid = 0x27c6,  .pid = 0x658C,  },

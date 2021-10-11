@@ -1,0 +1,23 @@
+From: Benjamin Berg <bberg@redhat.com>
+Date: Wed, 30 Jun 2021 15:56:45 +0200
+Subject: synaptics: Fix warning about missing initialization
+
+The compiler seems to (incorrectly) think that cleanup might happen
+before the variable has been initialized.
+---
+ libfprint/drivers/synaptics/synaptics.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libfprint/drivers/synaptics/synaptics.c b/libfprint/drivers/synaptics/synaptics.c
+index 85de41f..fe66f03 100644
+--- a/libfprint/drivers/synaptics/synaptics.c
++++ b/libfprint/drivers/synaptics/synaptics.c
+@@ -461,7 +461,7 @@ create_print (FpiDeviceSynaptics *self,
+               guint8              finger_id)
+ {
+   FpPrint *print;
+-  g_autofree gchar *user_id_safe;
++  g_autofree gchar *user_id_safe = NULL;
+   GVariant *data = NULL;
+   GVariant *uid = NULL;
+ 
