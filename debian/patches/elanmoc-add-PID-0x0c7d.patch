@@ -1,0 +1,36 @@
+From: hermanlin <herman.lin@emc.com.tw>
+Date: Tue, 12 Oct 2021 14:02:48 +0800
+Subject: elanmoc: add PID 0x0c7d
+
+Signed-off-by: hermanlin <herman.lin@emc.com.tw>
+
+Origin: https://gitlab.freedesktop.org/libfprint/libfprint/libfprint/-/commit/5d0a3eab
+---
+ data/autosuspend.hwdb               | 1 +
+ libfprint/drivers/elanmoc/elanmoc.c | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index 8b1527d..42d22ca 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -142,6 +142,7 @@ usb:v04F3p0C58*
+  ID_PERSIST=0
+ 
+ # Supported by libfprint driver elanmoc
++usb:v04F3p0C7D*
+ usb:v04F3p0C7E*
+  ID_AUTOSUSPEND=1
+  ID_PERSIST=0
+diff --git a/libfprint/drivers/elanmoc/elanmoc.c b/libfprint/drivers/elanmoc/elanmoc.c
+index aef386c..69700a0 100644
+--- a/libfprint/drivers/elanmoc/elanmoc.c
++++ b/libfprint/drivers/elanmoc/elanmoc.c
+@@ -25,6 +25,7 @@
+ G_DEFINE_TYPE (FpiDeviceElanmoc, fpi_device_elanmoc, FP_TYPE_DEVICE)
+ 
+ static const FpIdEntry id_table[] = {
++  { .vid = 0x04f3,  .pid = 0x0c7d,  },
+   { .vid = 0x04f3,  .pid = 0x0c7e,  },
+   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */
+ };
