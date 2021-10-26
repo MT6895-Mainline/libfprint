@@ -13,3 +13,4 @@ elan-Add-PID-0c4f.patch
 elan-Add-PID-0c63.patch
 Added-ELAN-0c6e-from-ROG-Flow-X13.patch
 elan-Add-PID-0x0c58.patch
+goodixmoc-Fix-template-struct-for-required-length-calcula.patch
