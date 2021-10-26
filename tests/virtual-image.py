@@ -21,14 +21,6 @@ except Exception as e:
 
 FPrint = None
 
-# Re-run the test with the passed wrapper if set
-wrapper = os.getenv('LIBFPRINT_TEST_WRAPPER')
-if wrapper:
-    wrap_cmd = wrapper.split(' ') + [sys.executable, os.path.abspath(__file__)] + \
-        sys.argv[1:]
-    os.unsetenv('LIBFPRINT_TEST_WRAPPER')
-    sys.exit(subprocess.check_call(wrap_cmd))
-
 def load_image(img):
     png = cairo.ImageSurface.create_from_png(img)
 
@@ -140,6 +132,20 @@ class VirtualImage(unittest.TestCase):
         while iterate and ctx.pending():
             ctx.iteration(False)
 
+    def test_features(self):
+        self.assertTrue(self.dev.has_feature(FPrint.DeviceFeature.CAPTURE))
+        self.assertTrue(self.dev.has_feature(FPrint.DeviceFeature.IDENTIFY))
+        self.assertTrue(self.dev.has_feature(FPrint.DeviceFeature.VERIFY))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.DUPLICATES_CHECK))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.STORAGE))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.STORAGE_LIST))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.STORAGE_DELETE))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.STORAGE_CLEAR))
+        self.assertEqual(self.dev.get_features(),
+                         FPrint.DeviceFeature.CAPTURE |
+                         FPrint.DeviceFeature.IDENTIFY |
+                         FPrint.DeviceFeature.VERIFY)
+
     def test_capture_prevents_close(self):
         cancel = Gio.Cancellable()
         def cancelled_cb(dev, res, obj):
@@ -223,6 +229,10 @@ class VirtualImage(unittest.TestCase):
             ctx.iteration(True)
 
         self.assertEqual(self.dev.get_finger_status(), FPrint.FingerStatusFlags.NONE)
+        self.assertEqual(self._enrolled.props.driver, self.dev.get_driver())
+        self.assertEqual(self._enrolled.props.device_id, self.dev.get_device_id())
+        self.assertEqual(self._enrolled.props.device_stored, self.dev.has_storage())
+        self.assertIsNone(self._enrolled.get_image())
 
         return self._enrolled
 
@@ -244,6 +254,7 @@ class VirtualImage(unittest.TestCase):
         while self._verify_match is None:
             ctx.iteration(True)
         assert(self._verify_match)
+        self.assertIsNotNone(self._verify_fp.props.image)
 
         self._verify_match = None
         self._verify_fp = None

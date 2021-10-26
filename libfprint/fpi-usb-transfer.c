@@ -187,7 +187,7 @@ fpi_usb_transfer_fill_bulk (FpiUsbTransfer *transfer,
  * fpi_usb_transfer_fill_bulk_full:
  * @transfer: The #FpiUsbTransfer
  * @endpoint: The endpoint to send the transfer to
- * @buffer: The data to send. A buffer will be created and managed for you if you pass NULL.
+ * @buffer: The data to send.
  * @length: The size of @buffer
  * @free_func: (destroy buffer): Destroy notify for @buffer
  *
@@ -275,7 +275,7 @@ fpi_usb_transfer_fill_interrupt (FpiUsbTransfer *transfer,
  * fpi_usb_transfer_fill_interrupt_full:
  * @transfer: The #FpiUsbTransfer
  * @endpoint: The endpoint to send the transfer to
- * @buffer: The data to send. A buffer will be created and managed for you if you pass NULL.
+ * @buffer: The data to send.
  * @length: The size of @buffer
  * @free_func: (destroy buffer): Destroy notify for @buffer
  *
@@ -354,9 +354,10 @@ transfer_finish_cb (GObject *source_object, GAsyncResult *res, gpointer user_dat
   fpi_usb_transfer_unref (transfer);
 }
 
-static gboolean
-transfer_cancel_cb (FpiUsbTransfer *transfer)
+static void
+transfer_cancel_cb (FpDevice *device, gpointer user_data)
 {
+  FpiUsbTransfer *transfer = user_data;
   GError *error;
   FpiUsbTransferCallback callback;
 
@@ -369,8 +370,6 @@ transfer_cancel_cb (FpiUsbTransfer *transfer)
   callback (transfer, transfer->device, transfer->user_data, error);
 
   fpi_usb_transfer_unref (transfer);
-
-  return G_SOURCE_REMOVE;
 }
 
 /**
@@ -413,7 +412,8 @@ fpi_usb_transfer_submit (FpiUsbTransfer        *transfer,
    */
   if (cancellable && g_cancellable_is_cancelled (cancellable))
     {
-      g_idle_add ((GSourceFunc) transfer_cancel_cb, transfer);
+      fpi_device_add_timeout (transfer->device, 0,
+                              transfer_cancel_cb, transfer, NULL);
       return;
     }
 

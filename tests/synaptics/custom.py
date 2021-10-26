@@ -14,8 +14,17 @@ d = devices[0]
 del devices
 
 assert d.get_driver() == "synaptics"
+assert not d.has_feature(FPrint.DeviceFeature.CAPTURE)
+assert d.has_feature(FPrint.DeviceFeature.IDENTIFY)
+assert d.has_feature(FPrint.DeviceFeature.VERIFY)
+assert not d.has_feature(FPrint.DeviceFeature.DUPLICATES_CHECK)
+assert d.has_feature(FPrint.DeviceFeature.STORAGE)
+assert d.has_feature(FPrint.DeviceFeature.STORAGE_DELETE)
+assert d.has_feature(FPrint.DeviceFeature.STORAGE_CLEAR)
 
 d.open_sync()
+
+d.clear_storage_sync()
 
 template = FPrint.Print.new(d)
 
@@ -30,11 +39,6 @@ p = d.enroll_sync(template, None, enroll_progress, None)
 assert d.get_finger_status() == FPrint.FingerStatusFlags.NONE
 print("enroll done")
 
-print("listing")
-stored = d.list_prints_sync()
-print("listing done")
-assert len(stored) == 1
-assert stored[0].equal(p)
 print("verifying")
 assert d.get_finger_status() == FPrint.FingerStatusFlags.NONE
 verify_res, verify_print = d.verify_sync(p)
