@@ -115,6 +115,7 @@ if [ "$1" = "configure" -o "$1" = "upgrade" ] && command -V udevadm >/dev/null 2
 	udevadm trigger --action=add --attr-match=idVendor=04f3 --attr-match=idProduct=0c63
 	udevadm trigger --action=add --attr-match=idVendor=04f3 --attr-match=idProduct=0c6e
 	udevadm trigger --action=add --attr-match=idVendor=04f3 --attr-match=idProduct=0c58
+	udevadm trigger --action=add --attr-match=idVendor=04f3 --attr-match=idProduct=0c7d
 	udevadm trigger --action=add --attr-match=idVendor=04f3 --attr-match=idProduct=0c7e
 	udevadm trigger --action=add --attr-match=idVendor=1c7a --attr-match=idProduct=0603
 	udevadm trigger --action=add --attr-match=idVendor=27c6 --attr-match=idProduct=5840
@@ -123,6 +124,7 @@ if [ "$1" = "configure" -o "$1" = "upgrade" ] && command -V udevadm >/dev/null 2
 	udevadm trigger --action=add --attr-match=idVendor=27c6 --attr-match=idProduct=639c
 	udevadm trigger --action=add --attr-match=idVendor=27c6 --attr-match=idProduct=63ac
 	udevadm trigger --action=add --attr-match=idVendor=27c6 --attr-match=idProduct=63bc
+	udevadm trigger --action=add --attr-match=idVendor=27c6 --attr-match=idProduct=63cc
 	udevadm trigger --action=add --attr-match=idVendor=27c6 --attr-match=idProduct=6496
 	udevadm trigger --action=add --attr-match=idVendor=27c6 --attr-match=idProduct=6584
 	udevadm trigger --action=add --attr-match=idVendor=27c6 --attr-match=idProduct=658c
