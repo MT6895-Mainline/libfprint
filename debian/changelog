@@ -1,3 +1,13 @@
+libfprint (1:1.90.7+git20210222+tod1-0ubuntu4) UNRELEASED; urgency=medium
+
+  * debian/patches: Add support for new elan, goodix and synaptics drivers.
+    Most of the drivers only need to list new product IDs to work with new
+    devices, and including other changes that new devices may require.
+    (LP: #1945296, #1945298)
+  * debian/patches: Fix template struct in goodix drivers (LP: #1945296)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 26 Oct 2021 21:24:05 +0200
+
 libfprint (1:1.90.7+git20210222+tod1-0ubuntu3) impish; urgency=medium
 
   * No-change rebuild to build packages with zstd compression.
