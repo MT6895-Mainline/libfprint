@@ -22,14 +22,33 @@ envs.set('FP_DRIVERS_WHITELIST', ':'.join([
 envs.set('NO_AT_BRIDGE', '1')
 
 drivers_tests = [
+    'aes2501',
     'aes3500',
     'elan',
+    'elan-cobo',
+    'elanmoc',
+    'elanspi',
     'synaptics',
+    'upektc_img',
+    'uru4000-msv2',
+    'uru4000-4500',
     'vfs0050',
     'vfs301',
     'vfs5011',
+    'vfs7552',
     'goodixmoc',
+    'nb1010',
+    'egis0570',
 ]
+
+if get_option('introspection')
+  conf = configuration_data()
+  conf.set('SRCDIR', meson.source_root())
+  conf.set('BUILDDIR', meson.build_root())
+  configure_file(configuration: conf,
+      input: 'create-driver-test.py.in',
+      output: 'create-driver-test.py')
+endif
 
 if get_option('introspection')
     envs.prepend('GI_TYPELIB_PATH', join_paths(meson.build_root(), 'libfprint'))
@@ -80,17 +99,18 @@ if get_option('introspection')
     endforeach
 
     foreach driver_test: drivers_tests
+        driver_name = driver_test.split('-')[0]
         driver_envs = envs
-        driver_envs.set('FP_DRIVERS_WHITELIST', driver_test)
+        driver_envs.set('FP_DRIVERS_WHITELIST', driver_name)
 
-        if (driver_test in supported_drivers and
+        if (driver_name in supported_drivers and
             gusb_dep.version().version_compare('>= 0.3.0'))
             test(driver_test,
                 find_program('umockdev-test.py'),
                 args: join_paths(meson.current_source_dir(), driver_test),
                 env: driver_envs,
                 suite: ['drivers'],
-                timeout: 10,
+                timeout: 15,
                 depends: libfprint_typelib,
             )
         else
@@ -175,9 +195,8 @@ foreach test_name: unit_tests
         link_with: test_utils,
     )
     test(test_name,
-        find_program('test-runner.sh'),
+        test_exe,
         suite: ['unit-tests'],
-        args: [test_exe],
         env: envs,
     )
 endforeach
@@ -191,11 +210,17 @@ test('udev-hwdb',
 
 gdb = find_program('gdb', required: false)
 if gdb.found()
+    libfprint_wrapper = [
+        gdb.path(),
+        '-batch',
+        '-ex', 'run',
+        '--args',
+    ]
     add_test_setup('gdb',
         timeout_multiplier: 1000,
+        exe_wrapper: libfprint_wrapper,
         env: [
-            'LIBFPRINT_TEST_WRAPPER=@0@ --args'.format(
-                gdb.path())
+            'LIBFPRINT_TEST_WRAPPER=' + ' '.join(libfprint_wrapper),
         ])
 endif
 
@@ -205,12 +230,19 @@ if valgrind.found()
     glib_suppressions = glib_share + '/valgrind/glib.supp'
     python_suppressions = '@0@/@1@'.format(meson.source_root(),
         files('valgrind-python.supp')[0])
+    libfprint_wrapper = [
+        valgrind.path(),
+        '--tool=memcheck',
+        '--leak-check=full',
+        '--suppressions=' + glib_suppressions,
+        '--suppressions=' + python_suppressions,
+    ]
     add_test_setup('valgrind',
         timeout_multiplier: 10,
+        exe_wrapper: libfprint_wrapper,
         env: [
             'G_SLICE=always-malloc',
-            ('LIBFPRINT_TEST_WRAPPER=@0@ --tool=memcheck --leak-check=full ' +
-             '--suppressions=@1@ --suppressions=@2@').format(
-                valgrind.path(), glib_suppressions, python_suppressions)
+            'UNDER_VALGRIND=1',
+            'LIBFPRINT_TEST_WRAPPER=' + ' '.join(libfprint_wrapper),
         ])
 endif

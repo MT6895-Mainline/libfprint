@@ -37,16 +37,140 @@ G_DEFINE_TYPE (FpDeviceVirtualDevice, fpi_device_virtual_device, FP_TYPE_DEVICE)
 #define INSERT_CMD_PREFIX "INSERT "
 #define REMOVE_CMD_PREFIX "REMOVE "
 #define SCAN_CMD_PREFIX "SCAN "
+#define CONT_CMD_PREFIX "CONT "
 #define ERROR_CMD_PREFIX "ERROR "
+#define RETRY_CMD_PREFIX "RETRY "
+#define FINGER_CMD_PREFIX "FINGER "
+#define SLEEP_CMD_PREFIX "SLEEP "
+#define SET_ENROLL_STAGES_PREFIX "SET_ENROLL_STAGES "
+#define SET_SCAN_TYPE_PREFIX "SET_SCAN_TYPE "
+#define SET_CANCELLATION_PREFIX "SET_CANCELLATION_ENABLED "
+#define SET_KEEP_ALIVE_PREFIX "SET_KEEP_ALIVE "
 
 #define LIST_CMD "LIST"
+#define UNPLUG_CMD "UNPLUG"
 
-char *
-process_cmds (FpDeviceVirtualDevice * self, gboolean scan, GError * *error)
+static void
+maybe_continue_current_action (FpDeviceVirtualDevice *self)
 {
+  FpDevice *dev = FP_DEVICE (self);
+
+  if (self->sleep_timeout_id)
+    return;
+
+  g_assert (self->wait_command_id == 0);
+
+  switch (fpi_device_get_current_action (dev))
+    {
+    case FPI_DEVICE_ACTION_ENROLL:
+      FP_DEVICE_GET_CLASS (self)->enroll (dev);
+      break;
+
+    case FPI_DEVICE_ACTION_VERIFY:
+      FP_DEVICE_GET_CLASS (self)->verify (dev);
+      break;
+
+    case FPI_DEVICE_ACTION_IDENTIFY:
+      FP_DEVICE_GET_CLASS (self)->identify (dev);
+      break;
+
+    case FPI_DEVICE_ACTION_LIST:
+      FP_DEVICE_GET_CLASS (self)->list (dev);
+      break;
+
+    case FPI_DEVICE_ACTION_DELETE:
+      FP_DEVICE_GET_CLASS (self)->delete (dev);
+      break;
+
+    case FPI_DEVICE_ACTION_OPEN:
+      FP_DEVICE_GET_CLASS (self)->open (dev);
+      break;
+
+    case FPI_DEVICE_ACTION_CLOSE:
+      FP_DEVICE_GET_CLASS (self)->close (dev);
+      break;
+
+    case FPI_DEVICE_ACTION_CLEAR_STORAGE:
+      FP_DEVICE_GET_CLASS (self)->clear_storage (dev);
+      break;
+
+    /* Not implemented/nothing to do. */
+    case FPI_DEVICE_ACTION_NONE:
+    case FPI_DEVICE_ACTION_PROBE:
+    case FPI_DEVICE_ACTION_CAPTURE:
+    default:
+      break;
+    }
+}
+
+static gboolean
+sleep_timeout_cb (gpointer data)
+{
+  FpDeviceVirtualDevice *self = data;
+
+  self->sleep_timeout_id = 0;
+
+  if (g_cancellable_is_cancelled (self->cancellable))
+    return FALSE;
+
+  g_debug ("Sleeping completed");
+  maybe_continue_current_action (self);
+
+  return FALSE;
+}
+
+static gboolean
+wait_for_command_timeout (gpointer data)
+{
+  FpDeviceVirtualDevice *self = FP_DEVICE_VIRTUAL_DEVICE (data);
+  FpiDeviceAction action;
+  GError *error = NULL;
+
+  self->wait_command_id = 0;
+
+  action = fpi_device_get_current_action (FP_DEVICE (self));
+  if (action == FPI_DEVICE_ACTION_LIST || action == FPI_DEVICE_ACTION_DELETE)
+    {
+      self->ignore_wait = TRUE;
+      maybe_continue_current_action (self);
+      self->ignore_wait = FALSE;
+
+      return FALSE;
+    }
+
+  error = g_error_new (G_IO_ERROR, G_IO_ERROR_TIMED_OUT, "No commands arrived in time to run!");
+  fpi_device_action_error (FP_DEVICE (self), error);
+
+  return FALSE;
+}
+
+gboolean
+process_cmds (FpDeviceVirtualDevice * self,
+              gboolean                scan,
+              char                  **scan_id,
+              GError                **error)
+{
+  gboolean removed;
+
+  if (g_cancellable_is_cancelled (self->cancellable) ||
+      (fpi_device_get_current_action (FP_DEVICE (self)) != FPI_DEVICE_ACTION_NONE &&
+       g_cancellable_is_cancelled (fpi_device_get_cancellable (FP_DEVICE (self)))))
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_CANCELLED,
+                           "Operation was cancelled");
+      return TRUE;
+    }
+
   while (self->pending_commands->len > 0)
     {
-      gchar *cmd = g_ptr_array_index (self->pending_commands, 0);
+      g_autofree gchar *cmd = NULL;
+
+      /* TODO: g_ptr_array_steal_index requires GLib 2.58, we depend on 2.56 */
+      cmd = g_ptr_array_index (self->pending_commands, 0);
+      g_ptr_array_index (self->pending_commands, 0) = NULL;
+      g_ptr_array_remove_index (self->pending_commands, 0);
+
+      g_debug ("Processing command %s", cmd);
 
       /* These are always processed. */
       if (g_str_has_prefix (cmd, INSERT_CMD_PREFIX))
@@ -55,7 +179,6 @@ process_cmds (FpDeviceVirtualDevice * self, gboolean scan, GError * *error)
           g_hash_table_add (self->prints_storage,
                             g_strdup (cmd + strlen (INSERT_CMD_PREFIX)));
 
-          g_ptr_array_remove_index (self->pending_commands, 0);
           continue;
         }
       else if (g_str_has_prefix (cmd, REMOVE_CMD_PREFIX))
@@ -65,48 +188,85 @@ process_cmds (FpDeviceVirtualDevice * self, gboolean scan, GError * *error)
                                     cmd + strlen (REMOVE_CMD_PREFIX)))
             g_warning ("ID %s was not found in storage", cmd + strlen (REMOVE_CMD_PREFIX));
 
-          g_ptr_array_remove_index (self->pending_commands, 0);
           continue;
         }
-
-      /* If we are not scanning, then we have to stop here. */
-      if (!scan)
-        break;
-
-      if (g_str_has_prefix (cmd, SCAN_CMD_PREFIX))
+      else if (g_str_has_prefix (cmd, SLEEP_CMD_PREFIX))
         {
-          char *res = g_strdup (cmd + strlen (SCAN_CMD_PREFIX));
+          guint64 sleep_ms = g_ascii_strtoull (cmd + strlen (SLEEP_CMD_PREFIX), NULL, 10);
 
-          g_ptr_array_remove_index (self->pending_commands, 0);
-          return res;
+          g_debug ("Sleeping %" G_GUINT64_FORMAT "ms", sleep_ms);
+          self->sleep_timeout_id = g_timeout_add (sleep_ms, sleep_timeout_cb, self);
+
+          return FALSE;
         }
       else if (g_str_has_prefix (cmd, ERROR_CMD_PREFIX))
         {
           g_propagate_error (error,
                              fpi_device_error_new (g_ascii_strtoull (cmd + strlen (ERROR_CMD_PREFIX), NULL, 10)));
 
-          g_ptr_array_remove_index (self->pending_commands, 0);
-          return NULL;
+          return TRUE;
+        }
+      else if (!scan && g_str_has_prefix (cmd, CONT_CMD_PREFIX))
+        {
+          return TRUE;
+        }
+
+      /* If we are not scanning, then we have to stop here. */
+      if (!scan)
+        {
+          g_warning ("Could not process command: %s", cmd);
+          break;
+        }
+
+      if (g_str_has_prefix (cmd, SCAN_CMD_PREFIX))
+        {
+          if (scan_id)
+            *scan_id = g_strdup (cmd + strlen (SCAN_CMD_PREFIX));
+
+          return TRUE;
+        }
+      else if (g_str_has_prefix (cmd, RETRY_CMD_PREFIX))
+        {
+          g_propagate_error (error,
+                             fpi_device_retry_new (g_ascii_strtoull (cmd + strlen (RETRY_CMD_PREFIX), NULL, 10)));
+
+          return TRUE;
+        }
+      else if (g_str_has_prefix (cmd, FINGER_CMD_PREFIX))
+        {
+          gboolean finger_present;
+
+          finger_present = g_ascii_strtoull (cmd + strlen (FINGER_CMD_PREFIX), NULL, 10) != 0;
+          fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                                   finger_present ? FP_FINGER_STATUS_PRESENT : FP_FINGER_STATUS_NONE,
+                                                   finger_present ? FP_FINGER_STATUS_NONE : FP_FINGER_STATUS_PRESENT);
+
+          continue;
         }
       else
         {
           g_warning ("Could not process command: %s", cmd);
-          g_ptr_array_remove_index (self->pending_commands, 0);
         }
     }
 
-  /* No commands left, throw a timeout error. */
-  g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_TIMED_OUT, "No commands left that can be run!");
-  return NULL;
+  if (self->ignore_wait)
+    return TRUE;
+
+  g_object_get (self, "removed", &removed, NULL);
+
+  g_assert (self->wait_command_id == 0);
+  if (!scan || removed)
+    self->wait_command_id = g_timeout_add (500, wait_for_command_timeout, self);
+  return FALSE;
 }
 
 static void
 write_key_to_listener (void *key, void *val, void *user_data)
 {
-  FpDeviceVirtualListener *listener = FP_DEVICE_VIRTUAL_LISTENER (user_data);
+  FpiDeviceVirtualListener *listener = FPI_DEVICE_VIRTUAL_LISTENER (user_data);
 
-  if (!fp_device_virtual_listener_write_sync (listener, key, strlen (key), NULL) ||
-      !fp_device_virtual_listener_write_sync (listener, "\n", 1, NULL))
+  if (!fpi_device_virtual_listener_write_sync (listener, key, strlen (key), NULL) ||
+      !fpi_device_virtual_listener_write_sync (listener, "\n", 1, NULL))
     g_warning ("Error writing reply to LIST command");
 }
 
@@ -116,11 +276,11 @@ recv_instruction_cb (GObject      *source_object,
                      gpointer      user_data)
 {
   g_autoptr(GError) error = NULL;
-  FpDeviceVirtualListener *listener = FP_DEVICE_VIRTUAL_LISTENER (source_object);
+  FpiDeviceVirtualListener *listener = FPI_DEVICE_VIRTUAL_LISTENER (source_object);
   gsize bytes;
 
-  bytes = fp_device_virtual_listener_read_finish (listener, res, &error);
-  fp_dbg ("Got instructions of length %ld\n", bytes);
+  bytes = fpi_device_virtual_listener_read_finish (listener, res, &error);
+  fp_dbg ("Got instructions of length %" G_GSIZE_FORMAT, bytes);
 
   if (error)
     {
@@ -139,35 +299,77 @@ recv_instruction_cb (GObject      *source_object,
       self = FP_DEVICE_VIRTUAL_DEVICE (user_data);
 
       cmd = g_strndup (self->recv_buf, bytes);
+      fp_dbg ("Received command %s", cmd);
 
       if (g_str_has_prefix (cmd, LIST_CMD))
         {
           if (self->prints_storage)
             g_hash_table_foreach (self->prints_storage, write_key_to_listener, listener);
         }
+      else if (g_str_has_prefix (cmd, UNPLUG_CMD))
+        {
+          fpi_device_remove (FP_DEVICE (self));
+          maybe_continue_current_action (self);
+        }
+      else if (g_str_has_prefix (cmd, SET_ENROLL_STAGES_PREFIX))
+        {
+          guint stages;
+
+          stages = g_ascii_strtoull (cmd + strlen (SET_ENROLL_STAGES_PREFIX), NULL, 10);
+          fpi_device_set_nr_enroll_stages (FP_DEVICE (self), stages);
+        }
+      else if (g_str_has_prefix (cmd, SET_SCAN_TYPE_PREFIX))
+        {
+          const char *scan_type = cmd + strlen (SET_SCAN_TYPE_PREFIX);
+          g_autoptr(GEnumClass) scan_types = g_type_class_ref (fp_scan_type_get_type ());
+          GEnumValue *value = g_enum_get_value_by_nick (scan_types, scan_type);
+
+          if (value)
+            fpi_device_set_scan_type (FP_DEVICE (self), value->value);
+          else
+            g_warning ("Scan type '%s' not found", scan_type);
+        }
+      else if (g_str_has_prefix (cmd, SET_CANCELLATION_PREFIX))
+        {
+          self->supports_cancellation = g_ascii_strtoull (
+            cmd + strlen (SET_CANCELLATION_PREFIX), NULL, 10) != 0;
+
+          g_debug ("Cancellation support toggled: %d",
+                   self->supports_cancellation);
+        }
+      else if (g_str_has_prefix (cmd, SET_KEEP_ALIVE_PREFIX))
+        {
+          self->keep_alive = g_ascii_strtoull (
+            cmd + strlen (SET_KEEP_ALIVE_PREFIX), NULL, 10) != 0;
+
+          g_debug ("Keep alive toggled: %d", self->keep_alive);
+        }
       else
         {
           g_ptr_array_add (self->pending_commands, g_steal_pointer (&cmd));
+          g_clear_handle_id (&self->wait_command_id, g_source_remove);
+
+          maybe_continue_current_action (self);
         }
     }
 
-  fp_device_virtual_listener_connection_close (listener);
+  fpi_device_virtual_listener_connection_close (listener);
 }
 
 static void
 recv_instruction (FpDeviceVirtualDevice *self)
 {
-  fp_device_virtual_listener_read (self->listener,
-                                   FALSE,
-                                   self->recv_buf,
-                                   sizeof (self->recv_buf),
-                                   recv_instruction_cb,
-                                   self);
+  fpi_device_virtual_listener_read (self->listener,
+                                    FALSE,
+                                    self->recv_buf,
+                                    sizeof (self->recv_buf),
+                                    recv_instruction_cb,
+                                    self);
 }
 
 static void
-on_listener_connected (FpDeviceVirtualListener *listener,
-                       gpointer                 user_data)
+on_listener_connected (FpiDeviceVirtualListener *listener,
+                       gpointer                  user_data)
 {
   FpDeviceVirtualDevice *self = FP_DEVICE_VIRTUAL_DEVICE (user_data);
 
@@ -179,20 +381,39 @@ dev_init (FpDevice *dev)
 {
   g_autoptr(GError) error = NULL;
   g_autoptr(GCancellable) cancellable = NULL;
-  g_autoptr(FpDeviceVirtualListener) listener = NULL;
+  g_autoptr(FpiDeviceVirtualListener) listener = NULL;
   FpDeviceVirtualDevice *self = FP_DEVICE_VIRTUAL_DEVICE (dev);
 
   G_DEBUG_HERE ();
 
-  listener = fp_device_virtual_listener_new ();
+  self->ignore_wait = TRUE;
+  if (!process_cmds (self, FALSE, NULL, &error))
+    {
+      self->ignore_wait = FALSE;
+      return;
+    }
+  self->ignore_wait = FALSE;
+
+  if (error)
+    {
+      fpi_device_open_complete (dev, g_steal_pointer (&error));
+      return;
+    }
+  else if (self->listener)
+    {
+      fpi_device_open_complete (dev, NULL);
+      return;
+    }
+
+  listener = fpi_device_virtual_listener_new ();
   cancellable = g_cancellable_new ();
 
-  if (!fp_device_virtual_listener_start (listener,
-                                         fpi_device_get_virtual_env (FP_DEVICE (self)),
-                                         cancellable,
-                                         on_listener_connected,
-                                         self,
-                                         &error))
+  if (!fpi_device_virtual_listener_start (listener,
+                                          fpi_device_get_virtual_env (FP_DEVICE (self)),
+                                          cancellable,
+                                          on_listener_connected,
+                                          self,
+                                          &error))
     {
       fpi_device_open_complete (dev, g_steal_pointer (&error));
       return;
@@ -204,25 +425,114 @@ dev_init (FpDevice *dev)
   fpi_device_open_complete (dev, NULL);
 }
 
+gboolean
+start_scan_command (FpDeviceVirtualDevice *self,
+                    char                 **scan_id,
+                    GError               **error)
+{
+  g_autoptr(GError) local_error = NULL;
+  gboolean cont;
+
+  if (fp_device_get_finger_status (FP_DEVICE (self)) == FP_FINGER_STATUS_NONE)
+    self->injected_synthetic_cmd = FALSE;
+
+  cont = process_cmds (self, TRUE, scan_id, &local_error);
+  /* We report finger needed if we are waiting for instructions
+   * (i.e. we did not get an explicit SLEEP command).
+   */
+  if (!self->sleep_timeout_id)
+    {
+      fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                               FP_FINGER_STATUS_NEEDED,
+                                               FP_FINGER_STATUS_NONE);
+    }
+
+  if (!cont)
+    return FALSE;
+
+  /* Scan or error*/
+  fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                           FP_FINGER_STATUS_NEEDED,
+                                           FP_FINGER_STATUS_NONE);
+
+  if (local_error)
+    g_propagate_error (error, g_steal_pointer (&local_error));
+  else
+    fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                             FP_FINGER_STATUS_PRESENT,
+                                             FP_FINGER_STATUS_NONE);
+
+  return TRUE;
+}
+
+gboolean
+should_wait_to_sleep (FpDeviceVirtualDevice *self,
+                      const char            *scan_id,
+                      GError                *error)
+{
+  const gchar *cmd;
+
+  if (self->sleep_timeout_id)
+    return TRUE;
+
+  if (!self->pending_commands->len)
+    return FALSE;
+
+  cmd = g_ptr_array_index (self->pending_commands, 0);
+
+  if (g_str_has_prefix (cmd, SLEEP_CMD_PREFIX))
+    {
+      g_autoptr(GError) local_error = NULL;
+      process_cmds (self, FALSE, NULL, &local_error);
+
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return FALSE;
+
+      g_assert (!self->injected_synthetic_cmd);
+      g_assert (self->sleep_timeout_id != 0);
+
+      if (!self->pending_commands->len)
+        {
+          g_autofree char *injected_cmd = NULL;
+
+          if (scan_id)
+            injected_cmd = g_strconcat (SCAN_CMD_PREFIX, scan_id, NULL);
+          else if (error && error->domain == FP_DEVICE_ERROR)
+            injected_cmd = g_strdup_printf (ERROR_CMD_PREFIX " %d", error->code);
+          else if (error && error->domain == FP_DEVICE_RETRY)
+            injected_cmd = g_strdup_printf (RETRY_CMD_PREFIX " %d", error->code);
+          else
+            return TRUE;
+
+          g_debug ("Sleeping now, command queued for later: %s", injected_cmd);
+
+          g_ptr_array_insert (self->pending_commands, 0, g_steal_pointer (&injected_cmd));
+          self->injected_synthetic_cmd = TRUE;
+        }
+    }
+
+  return self->sleep_timeout_id != 0;
+}
+
 static void
 dev_verify (FpDevice *dev)
 {
+  g_autoptr(GError) error = NULL;
   FpDeviceVirtualDevice *self = FP_DEVICE_VIRTUAL_DEVICE (dev);
-  FpPrint *print;
-  GError *error = NULL;
   g_autofree char *scan_id = NULL;
 
-  fpi_device_get_verify_data (dev, &print);
-
-  scan_id = process_cmds (self, TRUE, &error);
+  if (!start_scan_command (self, &scan_id, &error))
+    return;
 
   if (scan_id)
     {
       GVariant *data = NULL;
       FpPrint *new_scan;
+      FpPrint *print;
       gboolean success;
 
       g_debug ("Virtual device scanned print %s", scan_id);
+      fpi_device_get_verify_data (dev, &print);
 
       new_scan = fp_print_new (dev);
       fpi_print_set_type (new_scan, FPI_PRINT_RAW);
@@ -231,64 +541,199 @@ dev_verify (FpDevice *dev)
       data = g_variant_new_string (scan_id);
       g_object_set (new_scan, "fpi-data", data, NULL);
 
-      success = fp_print_equal (print, new_scan);
+      if (self->prints_storage && !g_hash_table_contains (self->prints_storage, scan_id))
+        {
+          g_clear_object (&new_scan);
+          success = FALSE;
+        }
+      else
+        {
+          success = fp_print_equal (print, new_scan);
+        }
 
-      fpi_device_verify_report (dev,
-                                success ? FPI_MATCH_SUCCESS : FPI_MATCH_FAIL,
-                                new_scan,
-                                NULL);
+      if (!self->match_reported)
+        {
+          self->match_reported = TRUE;
+          fpi_device_verify_report (dev,
+                                    success ? FPI_MATCH_SUCCESS : FPI_MATCH_FAIL,
+                                    new_scan,
+                                    NULL);
+        }
     }
-  else
+  else if (error)
     {
-      g_debug ("Virtual device scann failed with error: %s", error->message);
+      g_debug ("Virtual device scan failed with error: %s", error->message);
     }
 
-  fpi_device_verify_complete (dev, error);
+  fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                           FP_FINGER_STATUS_NONE,
+                                           FP_FINGER_STATUS_PRESENT);
+
+  if (error && error->domain == FP_DEVICE_RETRY)
+    fpi_device_verify_report (dev, FPI_MATCH_ERROR, NULL, g_steal_pointer (&error));
+
+  if (should_wait_to_sleep (self, scan_id, error))
+    return;
+
+  self->match_reported = FALSE;
+  fpi_device_verify_complete (dev, g_steal_pointer (&error));
 }
 
 static void
 dev_enroll (FpDevice *dev)
 {
+  g_autoptr(GError) error = NULL;
   FpDeviceVirtualDevice *self = FP_DEVICE_VIRTUAL_DEVICE (dev);
-  GError *error = NULL;
   FpPrint *print = NULL;
   g_autofree char *id = NULL;
 
-  fpi_device_get_enroll_data (dev, &print);
+  if (!start_scan_command (self, &id, &error))
+    return;
 
-  id = process_cmds (self, TRUE, &error);
+  fpi_device_get_enroll_data (dev, &print);
 
   if (id)
     {
       GVariant *data;
+      gboolean completed;
 
-      fpi_print_set_type (print, FPI_PRINT_RAW);
-      data = g_variant_new_string (id);
-      g_object_set (print, "fpi-data", data, NULL);
-
-      if (self->prints_storage)
+      if (self->prints_storage && g_hash_table_contains (self->prints_storage, id))
         {
-          g_hash_table_add (self->prints_storage, g_strdup (id));
-          fpi_print_set_device_stored (print, TRUE);
+          if (should_wait_to_sleep (self, id, error))
+            return;
+
+          fpi_device_enroll_complete (dev, NULL,
+                                      fpi_device_error_new (FP_DEVICE_ERROR_DATA_DUPLICATE));
+          return;
         }
 
-      fpi_device_enroll_complete (dev, g_object_ref (print), error);
+      if (self->enroll_stages_passed == 0)
+        {
+          fpi_print_set_type (print, FPI_PRINT_RAW);
+          data = g_variant_new_string (id);
+          g_object_set (print, "fpi-data", data, NULL);
+        }
+      else
+        {
+          gboolean changed;
+
+          g_object_get (print, "fpi-data", &data, NULL);
+          changed = !g_str_equal (id, g_variant_get_string (data, NULL));
+          g_variant_unref (data);
+
+          if (changed)
+            {
+              g_set_error (&error, FP_DEVICE_RETRY, FP_DEVICE_RETRY_GENERAL, "ID Mismatch");
+              fpi_device_enroll_progress (dev, self->enroll_stages_passed, NULL,
+                                          g_steal_pointer (&error));
+
+              if (!should_wait_to_sleep (self, id, error))
+                self->sleep_timeout_id = g_idle_add (sleep_timeout_cb, self);
+              return;
+            }
+        }
+
+      self->enroll_stages_passed++;
+      completed = self->enroll_stages_passed == fp_device_get_nr_enroll_stages (FP_DEVICE (self));
+      fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                               completed ?
+                                               FP_FINGER_STATUS_NEEDED :
+                                               FP_FINGER_STATUS_NONE,
+                                               FP_FINGER_STATUS_PRESENT);
+
+      fpi_device_enroll_progress (dev, self->enroll_stages_passed, print, NULL);
+
+      if (completed)
+        {
+          if (self->prints_storage)
+            {
+              fpi_print_set_device_stored (print, TRUE);
+              g_hash_table_add (self->prints_storage, g_strdup (id));
+            }
+
+          fpi_device_enroll_complete (dev, g_object_ref (print), NULL);
+          self->enroll_stages_passed = 0;
+        }
+      else if (!should_wait_to_sleep (self, id, error))
+        {
+          self->sleep_timeout_id = g_idle_add (sleep_timeout_cb, self);
+        }
     }
   else
     {
-      fpi_device_enroll_complete (dev, NULL, error);
+      fpi_device_report_finger_status_changes (FP_DEVICE (self),
+                                               FP_FINGER_STATUS_NONE,
+                                               FP_FINGER_STATUS_PRESENT);
+
+      if (error && error->domain == FP_DEVICE_RETRY)
+        {
+          fpi_device_enroll_progress (dev, self->enroll_stages_passed, NULL, g_steal_pointer (&error));
+
+          if (!should_wait_to_sleep (self, id, error))
+            self->sleep_timeout_id = g_idle_add (sleep_timeout_cb, self);
+        }
+      else
+        {
+          if (should_wait_to_sleep (self, id, error))
+            return;
+
+          self->enroll_stages_passed = 0;
+          fpi_device_enroll_complete (dev, NULL, g_steal_pointer (&error));
+        }
     }
+}
+
+static void
+dev_cancel (FpDevice *dev)
+{
+  FpDeviceVirtualDevice *self = FP_DEVICE_VIRTUAL_DEVICE (dev);
+
+  if (self->injected_synthetic_cmd)
+    {
+      self->injected_synthetic_cmd = FALSE;
+      g_ptr_array_remove_index (self->pending_commands, 0);
+    }
+
+  if (!self->supports_cancellation)
+    return;
+
+  g_debug ("Got cancellation!");
+  g_clear_handle_id (&self->sleep_timeout_id, g_source_remove);
+  g_clear_handle_id (&self->wait_command_id, g_source_remove);
+
+  maybe_continue_current_action (self);
+}
+
+static void
+stop_listener (FpDeviceVirtualDevice *self)
+{
+  g_cancellable_cancel (self->cancellable);
+  g_clear_object (&self->cancellable);
+  g_clear_object (&self->listener);
 }
 
 static void
 dev_deinit (FpDevice *dev)
 {
+  g_autoptr(GError) error = NULL;
   FpDeviceVirtualDevice *self = FP_DEVICE_VIRTUAL_DEVICE (dev);
 
-  g_cancellable_cancel (self->cancellable);
-  g_clear_object (&self->cancellable);
-  g_clear_object (&self->listener);
-  g_clear_object (&self->listener);
+  self->ignore_wait = TRUE;
+  if (!process_cmds (self, FALSE, NULL, &error))
+    {
+      self->ignore_wait = FALSE;
+      return;
+    }
+  self->ignore_wait = FALSE;
+
+  if (error)
+    {
+      fpi_device_close_complete (dev, g_steal_pointer (&error));
+      return;
+    }
+
+  if (!self->keep_alive)
+    stop_listener (self);
 
   fpi_device_close_complete (dev, NULL);
 }
@@ -296,12 +741,18 @@ dev_deinit (FpDevice *dev)
 static void
 fpi_device_virtual_device_finalize (GObject *object)
 {
+  FpDeviceVirtualDevice *self = FP_DEVICE_VIRTUAL_DEVICE (object);
+
   G_DEBUG_HERE ();
+  stop_listener (self);
+  g_clear_pointer (&self->pending_commands, g_ptr_array_unref);
+  G_OBJECT_CLASS (fpi_device_virtual_device_parent_class)->finalize (object);
 }
 
 static void
 fpi_device_virtual_device_init (FpDeviceVirtualDevice *self)
 {
+  self->supports_cancellation = TRUE;
   self->pending_commands = g_ptr_array_new_with_free_func (g_free);
 }
 
@@ -328,4 +779,7 @@ fpi_device_virtual_device_class_init (FpDeviceVirtualDeviceClass *klass)
   dev_class->close = dev_deinit;
   dev_class->verify = dev_verify;
   dev_class->enroll = dev_enroll;
+  dev_class->cancel = dev_cancel;
+
+  fpi_device_class_auto_initialize_features (dev_class);
 }
