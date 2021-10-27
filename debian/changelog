@@ -1,4 +1,4 @@
-libfprint (1:1.94.1-1) UNRELEASED; urgency=medium
+libfprint (1:1.94.1-1) unstable; urgency=medium
 
   * New upstream release
   * debian/libfprint-2-2.postinst: Devices triggers updated
@@ -11,7 +11,7 @@ libfprint (1:1.94.1-1) UNRELEASED; urgency=medium
   * debian/patches: Fix test device descriptors to get tests passing
   * debian/libfprint-2-2.symbols: Add new symbols
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 27 Oct 2021 02:14:01 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 27 Oct 2021 15:17:09 +0200
 
 libfprint (1:1.90.7-3) experimental; urgency=medium
 
