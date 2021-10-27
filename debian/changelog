@@ -2,8 +2,16 @@ libfprint (1:1.94.1-1) UNRELEASED; urgency=medium
 
   * New upstream release
   * debian/libfprint-2-2.postinst: Devices triggers updated
+  * debian/patches: Remove all patches, they've been applied upstream
+  * debian/patches: Fix template struct in goodix drivers (LP: #1945296)
+  * debian/patches: Add support for new elan and goodix PIDs
+  * debian/libfprint-2-2.postinst: Update to match new PIDs
+  * debian: Build-depend on gudev-1, and set back rules dir.
+    This is needed for SPI devices
+  * debian/patches: Fix test device descriptors to get tests passing
+  * debian/libfprint-2-2.symbols: Add new symbols
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 27 Oct 2021 00:36:38 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 27 Oct 2021 02:14:01 +0200
 
 libfprint (1:1.90.7-3) experimental; urgency=medium
 
