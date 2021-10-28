@@ -1,4 +1,4 @@
-libfprint (1:1.94.1+tod1-0ubuntu1) UNRELEASED; urgency=medium
+libfprint (1:1.94.1+tod1-0ubuntu1) jammy; urgency=medium
 
   * Merge common packaging bits with debian
   * New TOD fork upstream release
@@ -11,7 +11,7 @@ libfprint (1:1.94.1+tod1-0ubuntu1) UNRELEASED; urgency=medium
     API.
   * debian/control: Depend libfprint-2-tod-dev on libgudev-1.0-dev
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 28 Oct 2021 20:30:19 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 28 Oct 2021 20:32:43 +0200
 
 libfprint (1:1.94.1-1) unstable; urgency=medium
 
