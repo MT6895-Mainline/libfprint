@@ -1,9 +1,17 @@
-libfprint (1:1.94.1+tod1-1) UNRELEASED; urgency=medium
+libfprint (1:1.94.1+tod1-0ubuntu1) UNRELEASED; urgency=medium
 
-  * New upstream release
+  * Merge common packaging bits with debian
+  * New TOD fork upstream release
   * debian/libfprint-2-2.postinst: Devices triggers updated
+  * debian/source/lintian-overrides: Update for new TOD drivers paths
+  * debian/patches: Drop, all applied on the TOD upstream branch
+  * debian/libfprint-2-tod1.symbols: Update TOD symbols
+  * debian/libfprint-2-2.symbols: Remove virtual device symbols.
+    These were wrongly exported before and not really part of any public
+    API.
+  * debian/control: Depend libfprint-2-tod-dev on libgudev-1.0-dev
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 28 Oct 2021 19:24:17 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 28 Oct 2021 20:30:19 +0200
 
 libfprint (1:1.94.1-1) unstable; urgency=medium
 
@@ -19,6 +27,35 @@ libfprint (1:1.94.1-1) unstable; urgency=medium
   * debian/libfprint-2-2.symbols: Add new symbols
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 27 Oct 2021 15:17:09 +0200
+
+libfprint (1:1.90.7-3) experimental; urgency=medium
+
+  * gbp.conf: Prepare for experimental branching
+  * debian/patches:
+    - Use hwdb to store device autosuspend rules and drop debian specifics.
+      Upstream will use an hwdb to store the device autosuspend (that will be
+      included in systemd also, so libfprint packagin may stop shipping it at
+      later point), so use it earlier.
+      Drop the debian specific rules to set the devices part of the `plugdev`
+      group as such devices should not be ever readable by an user, but the
+      access should be managed through a libfprint-based service (frpintd at
+      the date).
+    - Explicitly mark libfprint as a shared library
+  * libfprint-2-2.install: Install hwdb file
+  * debian/rules:
+    - Do not autorename upstream rules file anymore.
+      It's not there, while there's no point to rename the hwdb one.
+    - Manually set udev hwdb directory (was rules dir before)
+    - Don't remove the meson generated private values from pc file.
+      This is now generated correctly by upstream, so no need to drop anything
+      from it.
+  * debian: Generate postinst devices list automatically at gbp import phase.
+    Alternatively provide a script to keep the post-inst script updated
+  * debian/libfprint-2-2.postinst: Upgrade as per upstream hwdb.
+    Blacklisted devices can be now removed from the trigger list as we don't
+    add them to plugdev anymore.
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 21 Jan 2021 19:53:12 +0100
 
 libfprint (1:1.90.7+git20210222+tod1-0ubuntu4) jammy; urgency=medium
 
@@ -56,35 +93,6 @@ libfprint (1:1.90.7+git20210222+tod1-0ubuntu1) hirsute; urgency=medium
     (LP: #1909023)
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 22 Feb 2021 21:39:04 +0100
-
-libfprint (1:1.90.7-3) experimental; urgency=medium
-
-  * gbp.conf: Prepare for experimental branching
-  * debian/patches:
-    - Use hwdb to store device autosuspend rules and drop debian specifics.
-      Upstream will use an hwdb to store the device autosuspend (that will be
-      included in systemd also, so libfprint packagin may stop shipping it at
-      later point), so use it earlier.
-      Drop the debian specific rules to set the devices part of the `plugdev`
-      group as such devices should not be ever readable by an user, but the
-      access should be managed through a libfprint-based service (frpintd at
-      the date).
-    - Explicitly mark libfprint as a shared library
-  * libfprint-2-2.install: Install hwdb file
-  * debian/rules:
-    - Do not autorename upstream rules file anymore.
-      It's not there, while there's no point to rename the hwdb one.
-    - Manually set udev hwdb directory (was rules dir before)
-    - Don't remove the meson generated private values from pc file.
-      This is now generated correctly by upstream, so no need to drop anything
-      from it.
-  * debian: Generate postinst devices list automatically at gbp import phase.
-    Alternatively provide a script to keep the post-inst script updated
-  * debian/libfprint-2-2.postinst: Upgrade as per upstream hwdb.
-    Blacklisted devices can be now removed from the trigger list as we don't
-    add them to plugdev anymore.
-
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 21 Jan 2021 19:53:12 +0100
 
 libfprint (1:1.90.7-2) unstable; urgency=medium
 
