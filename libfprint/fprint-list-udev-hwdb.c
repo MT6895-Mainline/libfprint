@@ -33,8 +33,8 @@ static const FpIdEntry whitelist_id_table[] = {
   { .vid = 0x04f3, .pid = 0x0c00 },
   { .vid = 0x04f3, .pid = 0x0c4b },
   { .vid = 0x04f3, .pid = 0x0c4c },
-  { .vid = 0x04f3, .pid = 0x0c4f },
   { .vid = 0x04f3, .pid = 0x0c57 },
+  { .vid = 0x04f3, .pid = 0x0c5e },
   { .vid = 0x04f3, .pid = 0x2706 },
   { .vid = 0x06cb, .pid = 0x0081 },
   { .vid = 0x06cb, .pid = 0x0088 },
@@ -45,13 +45,21 @@ static const FpIdEntry whitelist_id_table[] = {
   { .vid = 0x06cb, .pid = 0x00b7 },
   { .vid = 0x06cb, .pid = 0x00bb },
   { .vid = 0x06cb, .pid = 0x00be },
+  { .vid = 0x06cb, .pid = 0x00c4 },
   { .vid = 0x06cb, .pid = 0x00cb },
   { .vid = 0x06cb, .pid = 0x00d8 },
   { .vid = 0x06cb, .pid = 0x00da },
+  { .vid = 0x06cb, .pid = 0x00e7 },
+  { .vid = 0x06cb, .pid = 0x00e9 },
   { .vid = 0x0a5c, .pid = 0x5801 },
   { .vid = 0x0a5c, .pid = 0x5805 },
   { .vid = 0x0a5c, .pid = 0x5834 },
+  { .vid = 0x0a5c, .pid = 0x5840 },
+  { .vid = 0x0a5c, .pid = 0x5841 },
+  { .vid = 0x0a5c, .pid = 0x5842 },
   { .vid = 0x0a5c, .pid = 0x5843 },
+  { .vid = 0x0a5c, .pid = 0x5844 },
+  { .vid = 0x0a5c, .pid = 0x5845 },
   { .vid = 0x10a5, .pid = 0x0007 },
   { .vid = 0x1188, .pid = 0x9545 },
   { .vid = 0x138a, .pid = 0x0007 },
@@ -60,7 +68,6 @@ static const FpIdEntry whitelist_id_table[] = {
   { .vid = 0x138a, .pid = 0x003d },
   { .vid = 0x138a, .pid = 0x003f },
   { .vid = 0x138a, .pid = 0x0090 },
-  { .vid = 0x138a, .pid = 0x0091 },
   { .vid = 0x138a, .pid = 0x0092 },
   { .vid = 0x138a, .pid = 0x0094 },
   { .vid = 0x138a, .pid = 0x0097 },
@@ -70,7 +77,6 @@ static const FpIdEntry whitelist_id_table[] = {
   { .vid = 0x1491, .pid = 0x0088 },
   { .vid = 0x16d1, .pid = 0x1027 },
   { .vid = 0x1c7a, .pid = 0x0300 },
-  { .vid = 0x1c7a, .pid = 0x0570 },
   { .vid = 0x1c7a, .pid = 0x0575 },
   { .vid = 0x27c6, .pid = 0x5042 },
   { .vid = 0x27c6, .pid = 0x5110 },
@@ -161,7 +167,10 @@ print_driver (const FpDeviceClass *cls)
     }
 
   if (num_printed > 0)
-    g_print (" ID_AUTOSUSPEND=1\n");
+    {
+      g_print (" ID_AUTOSUSPEND=1\n");
+      g_print (" ID_PERSIST=0\n");
+    }
 }
 
 static int

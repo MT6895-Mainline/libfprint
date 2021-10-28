@@ -127,6 +127,12 @@ fpi_tod_shared_drivers_register (void)
       fp_dbg ("Loading driver %s (%s)", cls->id, cls->full_name);
       g_array_append_val (shared_drivers, driver);
 
+      if (cls->features == FP_DEVICE_FEATURE_NONE)
+        {
+          g_debug ("Initializing features for driver %s", cls->id);
+          fpi_device_class_auto_initialize_features (cls);
+        }
+
       shared_modules = g_list_prepend (shared_modules,
                                        g_steal_pointer (&module));
     }
