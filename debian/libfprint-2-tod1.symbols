@@ -1,5 +1,7 @@
 libfprint-2-tod.so.1 libfprint-2-tod1 #MINVER#
  LIBFPRINT_TOD_1.0.0@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ LIBFPRINT_TOD_1_1.92@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ LIBFPRINT_TOD_1_1.94@LIBFPRINT_TOD_1_1.94 1:1.94.1+tod1
  fpi_assemble_frames@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_assemble_lines@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_byte_reader_dup_data@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
@@ -113,7 +115,12 @@ libfprint-2-tod.so.1 libfprint-2-tod1 #MINVER#
  fpi_device_action_is_cancelled@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_add_timeout@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_capture_complete@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_device_class_auto_initialize_features@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_device_clear_storage_complete@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
  fpi_device_close_complete@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_device_configure_wakeup@LIBFPRINT_TOD_1.0.0 1:1.94.1+tod1
+ fpi_device_critical_enter@LIBFPRINT_TOD_1_1.94 1:1.94.1+tod1
+ fpi_device_critical_leave@LIBFPRINT_TOD_1_1.94 1:1.94.1+tod1
  fpi_device_delete_complete@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_enroll_complete@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_enroll_progress@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
@@ -126,6 +133,7 @@ libfprint-2-tod.so.1 libfprint-2-tod1 #MINVER#
  fpi_device_get_driver_data@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_get_enroll_data@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_get_identify_data@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_device_get_udev_data@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
  fpi_device_get_usb_device@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_get_verify_data@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_get_virtual_env@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
@@ -137,10 +145,15 @@ libfprint-2-tod.so.1 libfprint-2-tod1 #MINVER#
  fpi_device_remove@LIBFPRINT_TOD_1.0.0 1:1.90.5+tod1
  fpi_device_report_finger_status@LIBFPRINT_TOD_1.0.0 1:1.90.5+tod1
  fpi_device_report_finger_status_changes@LIBFPRINT_TOD_1.0.0 1:1.90.5+tod1
+ fpi_device_resume_complete@LIBFPRINT_TOD_1_1.94 1:1.94.1+tod1
  fpi_device_retry_new@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_retry_new_msg@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_set_nr_enroll_stages@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_set_scan_type@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_device_suspend_complete@LIBFPRINT_TOD_1_1.94 1:1.94.1+tod1
+ fpi_device_udev_subtype_flags_get_type@LIBFPRINT_TOD_1.0.0 1:1.94.1+tod1
+ fpi_device_update_features@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_device_update_temp@LIBFPRINT_TOD_1.0.0 1:1.94.1+tod1
  fpi_device_verify_complete@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_verify_report@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_do_movement_estimation@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
@@ -168,21 +181,42 @@ libfprint-2-tod.so.1 libfprint-2-tod1 #MINVER#
  fpi_print_set_device_stored@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_print_set_type@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_print_type_get_type@LIBFPRINT_TOD_1.0.0 1:1.90.3+tod1
+ fpi_spi_transfer_get_type@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_spi_transfer_new@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_spi_transfer_read@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_spi_transfer_read_full@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_spi_transfer_ref@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_spi_transfer_submit@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_spi_transfer_submit_sync@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_spi_transfer_unref@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_spi_transfer_write@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_spi_transfer_write_full@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
  fpi_ssm_cancel_delayed_state_change@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_dup_error@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_free@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_get_cur_state@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_get_data@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_ssm_get_device@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
  fpi_ssm_get_error@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_jump_to_state@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_jump_to_state_delayed@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_ssm_jump_to_state_delayed@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_ssm_jump_to_state_delayed_1_90@LIBFPRINT_TOD_1.0.0 1:1.94.1+tod1
  fpi_ssm_mark_completed@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_mark_completed_delayed@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_ssm_mark_completed_delayed@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_ssm_mark_completed_delayed_1_90@LIBFPRINT_TOD_1.0.0 1:1.94.1+tod1
  fpi_ssm_mark_failed@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_new_full@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_ssm_new_full@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_ssm_new_full_1_90@LIBFPRINT_TOD_1.0.0 1:1.94.1+tod1
  fpi_ssm_next_state@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_next_state_delayed@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_ssm_next_state_delayed@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_ssm_next_state_delayed_1_90@LIBFPRINT_TOD_1.0.0 1:1.94.1+tod1
  fpi_ssm_set_data@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_ssm_spi_transfer_cb@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
+ fpi_ssm_spi_transfer_with_weak_pointer_cb@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
  fpi_ssm_start@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_start_subsm@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_ssm_usb_transfer_cb@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
