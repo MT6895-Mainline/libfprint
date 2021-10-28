@@ -27,13 +27,12 @@
 
 #include <config.h>
 
-#ifdef HAVE_UDEV
-#include <gudev/gudev.h>
-#endif
-
-#include <config.h>
 #ifdef HAVE_LIBFPRINT_TOD
 #include "tod/tod-shared-loader.h"
+#endif
+
+#ifdef HAVE_UDEV
+#include <gudev/gudev.h>
 #endif
 
 /**

@@ -39,6 +39,10 @@ We include bozorth3 from the US export controlled distribution. We have
 determined that it is fine to ship bozorth3 in an open source project,
 see https://fprint.freedesktop.org/us-export-control.html
 
+## TOD Informations
+
+See https://gitlab.freedesktop.org/3v1n0/libfprint/-/blob/tod/README.tod.md
+
 ## Historical links
 
 Older versions of libfprint are available at:

@@ -73,6 +73,9 @@ struct _FpiSpiTransfer
   /* Data free function */
   GDestroyNotify free_buffer_wr;
   GDestroyNotify free_buffer_rd;
+
+  /* padding for future expansion */
+  gpointer _padding_dummy[32];
 };
 
 GType              fpi_spi_transfer_get_type (void) G_GNUC_CONST;

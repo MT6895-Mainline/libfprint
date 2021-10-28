@@ -747,3 +747,7 @@ fpi_ssm_spi_transfer_with_weak_pointer_cb (FpiSpiTransfer *transfer,
 
   fpi_ssm_spi_transfer_cb (transfer, device, weak_ptr, error);
 }
+
+#ifdef TOD_LIBRARY
+#include "tod/tod-fpi-ssm.c"
+#endif

@@ -53,6 +53,12 @@ struct _FpIdEntry
       guint vid;
     };
     const gchar *virtual_envvar;
+  };
+  guint64 driver_data;
+
+  /* Elements added after TODv1 */
+  union
+  {
     struct
     {
       FpiDeviceUdevSubtypeFlags udev_types;
@@ -64,11 +70,10 @@ struct _FpIdEntry
       } hid_id;
     };
   };
-  guint64 driver_data;
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[16];
+  gpointer _padding_dummy[13];
 };
 
 /**
@@ -149,15 +154,10 @@ struct _FpDeviceClass
   const gchar     *full_name;
   FpDeviceType     type;
   const FpIdEntry *id_table;
-  FpDeviceFeature  features;
 
   /* Defaults for device properties */
   gint       nr_enroll_stages;
   FpScanType scan_type;
-
-  /* Simple device temperature model constants */
-  gint32 temp_hot_seconds;
-  gint32 temp_cold_seconds;
 
   /* Callbacks */
   gint (*usb_discover) (GUsbDevice *usb_device);
@@ -170,15 +170,23 @@ struct _FpDeviceClass
   void (*capture)  (FpDevice *device);
   void (*list)     (FpDevice *device);
   void (*delete)   (FpDevice * device);
-  void (*clear_storage)  (FpDevice * device);
 
   void (*cancel)   (FpDevice *device);
-  void (*suspend)  (FpDevice *device);
-  void (*resume)   (FpDevice *device);
+
+  /* Class elements added after tod-v1 */
+  FpDeviceFeature features;
+
+  /* Simple device temperature model constants */
+  gint32 temp_hot_seconds;
+  gint32 temp_cold_seconds;
+
+  void   (*clear_storage)  (FpDevice * device);
+  void   (*suspend)  (FpDevice *device);
+  void   (*resume)   (FpDevice *device);
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[32];
+  gpointer _padding_dummy[27];
 };
 
 void fpi_device_class_auto_initialize_features (FpDeviceClass *device_class);

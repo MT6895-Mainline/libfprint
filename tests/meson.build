@@ -248,15 +248,20 @@ if valgrind.found()
 endif
 
 if get_option('tod')
+    tod_test_driver_name = 'fake_test_dev_tod'
+    tod_ssm_test_driver_name = 'ssm_test_dev_tod'
     tod_envs = envs
     tod_envs.set('FP_TOD_KEEP_MODULES_OPEN', 'TRUE')
     tod_envs.set('FP_VIRTUAL_FAKE_DEVICE', 'yes')
-    tod_envs.set('FP_TOD_TEST_DRIVER_NAME', 'fake_test_dev_tod')
+    tod_envs.set('FP_TOD_TEST_DRIVER_NAME', tod_test_driver_name)
     tod_envs.prepend('LD_LIBRARY_PATH',
         meson.build_root() / 'libfprint',
         meson.build_root() / 'libfprint' / 'tod')
+    tod_subversion = meson.project_version().split('+tod')[0]
     tod_c_args = [
         '-DTEST_TOD_DRIVER=1',
+        '-DTOD_CURRENT_VERSION=@0@'.format(tod_soversion),
+        '-DTOD_CURRENT_SUBVERSION="@0@"'.format(tod_subversion),
     ]
 
     fake_driver = shared_module('device-fake-tod-driver',
@@ -273,35 +278,85 @@ if get_option('tod')
         install: false
     )
 
+    fp_todv1_enums = gnome.mkenums_simple('fp-todv1-enums',
+        source_dir: 'tod-drivers',
+        sources: [
+            'tod-drivers/base-fp-device.h',
+            'tod-drivers/base-fp-print.h',
+            'tod-drivers/base-fpi-device.h',
+            'tod-drivers/base-fpi-image.h',
+            'tod-drivers/base-fpi-image-device.h',
+            'tod-drivers/base-fpi-spi.h',
+            'tod-drivers/base-fpi-usb.h',
+        ],
+        install_header: false)
+
     test_utils_tod = static_library('fprint-test-utils-tod',
         sources: [
             'test-utils.c',
             'test-utils-tod.c',
+            fp_todv1_enums,
         ],
+        include_directories: 'tod-drivers',
         dependencies: libfprint_private_dep,
         install: false)
 
-    tod_unit_tests = [
+    tod_standalone_tests = [
+        'fp-todv1-types',
+    ]
+
+    tod_drivers_tests = [
         'fp-context-tod',
         'fp-device-tod',
         'fpi-device',
     ]
 
-    tod_dirs = {
-        'fake_test_dev_tod_current': meson.current_build_dir(),
+    tod_driver_infos = {
+        tod_test_driver_name + '_current': {
+            'tod-driver': tod_test_driver_name,
+            'tod-dir': meson.current_build_dir(),
+            'supported-tests': tod_drivers_tests,
+        }
     }
 
-    machine = run_command(meson.get_compiler('c'), '-dumpmachine').stdout().strip()
-    if machine.startswith('x86_64-')
-        tod_dirs += {
-            'fake_test_dev_tod_v1': meson.current_source_dir() / 'tod-drivers',
-        }
+    if host_machine.cpu_family() == 'x86_64'
+        tod_test_versions = [
+            'v1+1.90.1',
+            'v1+1.90.2',
+            'v1+1.90.3',
+            'v1+1.90.5',
+            'v1+1.94.0',
+        ]
+
+        foreach tod_version: tod_test_versions
+            tod_dir = meson.current_source_dir() / 'tod-drivers' / '-'.join([
+                'tod', host_machine.cpu_family(), tod_version
+            ])
+            tod_driver_infos += {
+                tod_test_driver_name + '_' + tod_version: {
+                    'tod-driver': tod_test_driver_name,
+                    'tod-dir': tod_dir,
+                    'supported-tests': tod_drivers_tests,
+                }
+            }
+
+            tod_driver_infos += {
+                tod_ssm_test_driver_name + '_' + tod_version: {
+                    'tod-driver': tod_ssm_test_driver_name,
+                    'tod-dir': tod_dir,
+                    'supported-tests': [
+                        'fp-context-tod',
+                    ],
+                }
+            }
+        endforeach
     endif
 
-    foreach test_name: tod_unit_tests
+    foreach test_name: tod_drivers_tests + tod_standalone_tests
         basename = 'test-' + test_name
         sufix = test_name.endswith('-tod') ? '' : '-tod'
-        test_name = test_name + sufix
+        tod_test_name = test_name + sufix
+        tod_suites = ['unit-tests', 'tod']
         test_exe = executable(basename + sufix,
             sources: basename + '.c',
             dependencies: libfprint_private_dep,
@@ -312,19 +367,29 @@ if get_option('tod')
             link_with: test_utils_tod,
         )
 
-        foreach tod_driver, tod_dir : tod_dirs
+        foreach tod_driver, tod_driver_info : tod_driver_infos
+            if test_name not in tod_driver_info.get('supported-tests')
+                continue
+            endif
             tod_test_envs = tod_envs
             tod_test_envs.prepend('FP_DRIVERS_WHITELIST', tod_driver)
-            tod_test_envs.set('FP_TOD_DRIVERS_DIR', tod_dir)
+            tod_test_envs.set('FP_TOD_DRIVERS_DIR', tod_driver_info.get('tod-dir'))
             tod_test_envs.set('FP_TOD_TEST_DRIVER_NAME', tod_driver)
 
-            test(test_name + '-' + tod_driver,
-                find_program('test-runner.sh'),
-                suite: ['unit-tests', 'tod', tod_driver],
-                args: [test_exe],
+            test(tod_test_name + '-' + tod_driver,
+                test_exe,
+                suite: tod_suites + [tod_driver],
                 env: tod_test_envs,
                 depends: fake_driver,
             )
         endforeach
+
+        if test_name in tod_standalone_tests
+            test(tod_test_name,
+                test_exe,
+                suite: tod_suites,
+                env: tod_envs,
+            )
+        endif
     endforeach
 endif

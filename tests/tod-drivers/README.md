@@ -7,3 +7,7 @@ test-device-fake) built using the minimum libfprint TOD we want to support.
 
 In this way the library is loaded during tests and tested for all the upstream
 tests and particularly test-fpi-device.
+
+Such binaries are compiled (for each platform) using the [libfprint TOD test
+drivers](https://gitlab.freedesktop.org/3v1n0/libfprint-tod-test-drivers)
+project, per each supported version.

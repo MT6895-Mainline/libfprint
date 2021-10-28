@@ -1,5 +1,5 @@
 project('libfprint', [ 'c', 'cpp' ],
-    version: '1.94.1',
+    version: '1.94.1+tod1',
     license: 'LGPLv2.1+',
     default_options: [
         'buildtype=debugoptimized',
@@ -292,13 +292,10 @@ if get_option('gtk-examples')
     endif
 endif
 
-<<<<<<< HEAD
-libfprint_conf.set10('HAVE_LIBFPRINT_TOD', get_option('tod'))
-=======
 # Some dependency resolving happens inside here
 subdir('libfprint')
->>>>>>> debian/1%1.94.1-1
 
+libfprint_conf.set10('HAVE_LIBFPRINT_TOD', get_option('tod'))
 configure_file(output: 'config.h', configuration: libfprint_conf)
 
 subdir('examples')

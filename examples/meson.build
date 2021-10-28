@@ -21,3 +21,13 @@ executable('cpp-test',
     'cpp-test.cpp',
     dependencies: libfprint_dep,
 )
+
+if get_option('tod')
+    executable('tod-inspector',
+        sources: 'tod-inspector.c',
+        dependencies: [
+            libfprint_dep,
+            tod_dep,
+        ],
+    )
+endif

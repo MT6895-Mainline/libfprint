@@ -46,7 +46,101 @@ fpt_context_device_driver_get_type (void)
   return G_TYPE_FROM_CLASS (FP_DEVICE_GET_CLASS (tctx->device));
 }
 
+static int
+tod_get_version (FpDeviceClass *device_class,
+                 const char   **sub_version)
+{
+  g_autofree char *tod_version = NULL;
+  const char *tod_version_info;
+  const char *tod_subversion_info;
+
+  g_debug ("Getting TOD version for driver '%s'", device_class->id);
+  g_assert_true (g_str_has_prefix (device_class->id, "fake_test_dev_tod"));
+
+  tod_version_info = device_class->id + sizeof ("fake_test_dev_tod");
+  g_debug ("Tod version info is '%s'", tod_version_info);
+  g_assert (*tod_version_info != '\0');
+
+  if (sub_version)
+    *sub_version = NULL;
+
+  if (g_str_equal (tod_version_info, "current"))
+    {
+      *sub_version = TOD_CURRENT_SUBVERSION;
+      return TOD_CURRENT_VERSION;
+    }
+
+  g_assert_true (g_str_has_prefix (device_class->id, "fake_test_dev_tod_v"));
+
+  tod_version_info = device_class->id + sizeof ("fake_test_dev_tod_v") - 1;
+  tod_subversion_info = strchr (tod_version_info, '+');
+  g_assert_nonnull (tod_subversion_info);
+  g_assert (*tod_subversion_info != '\0');
+
+  tod_version = g_strndup (tod_version_info,
+                           tod_subversion_info - tod_version_info);
+  tod_subversion_info += 1;
+
+  g_debug ("Tod version is '%s', subversion '%s'",
+           tod_version, tod_subversion_info);
+
+  g_assert_nonnull (tod_version);
+  g_assert (*tod_version != '\0');
+  g_assert (*tod_subversion_info != '\0');
+
+  if (sub_version)
+    *sub_version = tod_subversion_info;
+
+  return atoi (tod_version);
+}
+
 #endif
+
+static gboolean
+tod_check_version (FpDeviceClass *device_class,
+                   int            tod_version,
+                   const char    *tod_subversion)
+{
+#ifdef TEST_TOD_DRIVER
+  g_auto(GStrv) versions = NULL;
+  g_auto(GStrv) wanted_versions = NULL;
+  int version;
+  const char *sub_version;
+
+  version = tod_get_version (device_class, &sub_version);
+
+  if (version != tod_version)
+    return FALSE;
+
+  if (!tod_subversion)
+    return TRUE;
+
+  versions = g_strsplit (sub_version, ".", -1);
+  g_assert_cmpuint (g_strv_length (versions), ==, 3);
+
+  wanted_versions = g_strsplit (tod_subversion, ".", -1);
+  g_assert_cmpuint (g_strv_length (wanted_versions), ==, 3);
+
+  if (atoi (versions[0]) >= atoi (wanted_versions[0]) &&
+      atoi (versions[1]) > atoi (wanted_versions[1]))
+    return TRUE;
+
+  return atoi (versions[0]) == atoi (wanted_versions[0]) &&
+         atoi (versions[1]) == atoi (wanted_versions[1]) &&
+         atoi (versions[2]) >= atoi (wanted_versions[2]);
+#endif
+  return TRUE;
+}
+
+static gboolean
+tod_check_device_version (FpDevice   *device_class,
+                          int         tod_version,
+                          const char *tod_subversion)
+{
+  return tod_check_version (FP_DEVICE_GET_CLASS (device_class),
+                            tod_version,
+                            tod_subversion);
+}
 
 /* Utility functions */
 
@@ -539,6 +633,12 @@ test_driver_features_probe_updates (void)
   FpDeviceClass *dev_class = FP_DEVICE_GET_CLASS (device);
   FpiDeviceFake *fake_dev;
 
+  if (!tod_check_device_version (device, 1, "1.92.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.92.0");
+      return;
+    }
+
   g_assert_cmpuint (dev_class->features, !=, FP_DEVICE_FEATURE_NONE);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_CAPTURE);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_IDENTIFY);
@@ -592,7 +692,10 @@ test_driver_initial_features (void)
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_LIST);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_DELETE);
-  g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  if (tod_check_device_version (device, 1, "1.92.0"))
+    g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  else
+    g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
 
   g_async_initable_init_async (G_ASYNC_INITABLE (device),
                                G_PRIORITY_DEFAULT, NULL, NULL, NULL);
@@ -606,7 +709,10 @@ test_driver_initial_features (void)
   g_assert_true (fp_device_has_feature (device, FP_DEVICE_FEATURE_STORAGE));
   g_assert_true (fp_device_has_feature (device, FP_DEVICE_FEATURE_STORAGE_LIST));
   g_assert_true (fp_device_has_feature (device, FP_DEVICE_FEATURE_STORAGE_DELETE));
-  g_assert_true (fp_device_has_feature (device, FP_DEVICE_FEATURE_STORAGE_CLEAR));
+  if (tod_check_device_version (device, 1, "1.92.0"))
+    g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  else
+    g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
 
   g_assert_cmpuint (fp_device_get_features (device),
                     ==,
@@ -616,7 +722,8 @@ test_driver_initial_features (void)
                     FP_DEVICE_FEATURE_STORAGE |
                     FP_DEVICE_FEATURE_STORAGE_LIST |
                     FP_DEVICE_FEATURE_STORAGE_DELETE |
-                    FP_DEVICE_FEATURE_STORAGE_CLEAR);
+                    (tod_check_device_version (device, 1, "1.92.0") ?
+                     FP_DEVICE_FEATURE_STORAGE_CLEAR : 0));
 }
 
 static void
@@ -663,7 +770,10 @@ test_driver_initial_features_no_capture (void)
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_LIST);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_DELETE);
-  g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  if (tod_check_version (dev_class, 1, "1.92.0"))
+    g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  else
+    g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
 }
 
 static void
@@ -684,7 +794,10 @@ test_driver_initial_features_no_verify (void)
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_LIST);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_DELETE);
-  g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  if (tod_check_version (dev_class, 1, "1.92.0"))
+    g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  else
+    g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
 }
 
 static void
@@ -705,7 +818,10 @@ test_driver_initial_features_no_identify (void)
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_LIST);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_DELETE);
-  g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  if (tod_check_version (dev_class, 1, "1.92.0"))
+    g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  else
+    g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
 }
 
 static void
@@ -726,7 +842,10 @@ test_driver_initial_features_no_storage (void)
   g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_LIST);
   g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_DELETE);
-  g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  if (tod_check_version (dev_class, 1, "1.92.0"))
+    g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  else
+    g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
 }
 
 static void
@@ -744,10 +863,16 @@ test_driver_initial_features_no_list (void)
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_IDENTIFY);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_VERIFY);
   g_assert_false (dev_class->features & FP_DEVICE_FEATURE_DUPLICATES_CHECK);
-  g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE);
+  if (tod_check_version (dev_class, 1, "1.92.0"))
+    g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE);
+  else
+    g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE);
   g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_LIST);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_DELETE);
-  g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  if (tod_check_version (dev_class, 1, "1.92.0"))
+    g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  else
+    g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
 }
 
 static void
@@ -768,7 +893,10 @@ test_driver_initial_features_no_delete (void)
   g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE);
   g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_LIST);
   g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_DELETE);
-  g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  if (tod_check_version (dev_class, 1, "1.92.0"))
+    g_assert_true (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
+  else
+    g_assert_false (dev_class->features & FP_DEVICE_FEATURE_STORAGE_CLEAR);
 }
 
 static void
@@ -2005,6 +2133,12 @@ test_driver_identify_suspend_continues (void)
   FpiDeviceFake *fake_dev;
   FpPrint *expected_matched;
 
+  if (!tod_check_version (dev_class, 1, "1.94.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.94.0");
+      return;
+    }
+
   device = g_object_new (FPI_TYPE_DEVICE_FAKE, NULL);
   fake_dev = FPI_DEVICE_FAKE (device);
   orig_identify = dev_class->identify;
@@ -2071,6 +2205,12 @@ test_driver_identify_suspend_succeeds (void)
   FpiDeviceFake *fake_dev;
   FpPrint *expected_matched;
 
+  if (!tod_check_version (dev_class, 1, "1.94.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.94.0");
+      return;
+    }
+
   device = g_object_new (FPI_TYPE_DEVICE_FAKE, NULL);
   fake_dev = FPI_DEVICE_FAKE (device);
   orig_identify = dev_class->identify;
@@ -2133,6 +2273,12 @@ test_driver_identify_suspend_busy_error (void)
   FpiDeviceFake *fake_dev;
   FpPrint *expected_matched;
 
+  if (!tod_check_version (dev_class, 1, "1.94.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.94.0");
+      return;
+    }
+
   device = g_object_new (FPI_TYPE_DEVICE_FAKE, NULL);
   fake_dev = FPI_DEVICE_FAKE (device);
   orig_identify = dev_class->identify;
@@ -2190,6 +2336,12 @@ test_driver_identify_suspend_while_idle (void)
   g_autoptr(GError) error = NULL;
   FpiDeviceFake *fake_dev;
 
+  if (!tod_check_version (dev_class, 1, "1.94.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.94.0");
+      return;
+    }
+
   device = g_object_new (FPI_TYPE_DEVICE_FAKE, NULL);
   fake_dev = FPI_DEVICE_FAKE (device);
 
@@ -2233,6 +2385,12 @@ test_driver_identify_warmup_cooldown (void)
   void (*orig_identify) (FpDevice *device);
   FpiDeviceFake *fake_dev;
   gint64 start_time;
+
+  if (!tod_check_version (dev_class, 1, "1.94.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.94.0");
+      return;
+    }
 
   dev_class->temp_hot_seconds = 2;
   dev_class->temp_cold_seconds = 5;
@@ -2532,6 +2690,12 @@ test_driver_clear_storage (void)
   FpiDeviceFake *fake_dev = FPI_DEVICE_FAKE (device);
   gboolean ret;
 
+  if (!tod_check_device_version (device, 1, "1.92.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.92.0");
+      return;
+    }
+
   ret = fp_device_clear_storage_sync (device, NULL, &error);
   g_assert (fake_dev->last_called_function == dev_class->clear_storage);
   g_assert_no_error (error);
@@ -2546,6 +2710,12 @@ test_driver_clear_storage_error (void)
   FpDeviceClass *dev_class = FP_DEVICE_GET_CLASS (device);
   FpiDeviceFake *fake_dev = FPI_DEVICE_FAKE (device);
   gboolean ret;
+
+  if (!tod_check_device_version (device, 1, "1.92.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.92.0");
+      return;
+    }
 
   fake_dev->ret_error = fpi_device_error_new (FP_DEVICE_ERROR_GENERAL);
   ret = fp_device_clear_storage_sync (device, NULL, &error);
@@ -2652,6 +2822,12 @@ test_driver_critical (void)
   g_autoptr(FpAutoResetClass) dev_class = auto_reset_device_class ();
   void (*orig_verify) (FpDevice *device) = dev_class->verify;
   FpiDeviceFake *fake_dev = FPI_DEVICE_FAKE (device);
+
+  if (!tod_check_device_version (device, 1, "1.94.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.94.0");
+      return;
+    }
 
   fake_dev->last_called_function = NULL;
 
@@ -2861,6 +3037,12 @@ test_driver_action_is_cancelled_open (void)
   g_autoptr(GError) error = NULL;
   FpiDeviceFake *fake_dev;
 
+  if (!tod_check_version (dev_class, 1, "1.94.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.94.0");
+      return;
+    }
+
   dev_class->open = test_driver_action_is_cancelled_open_vfunc;
   device = g_object_new (FPI_TYPE_DEVICE_FAKE, NULL);
   fake_dev = FPI_DEVICE_FAKE (device);
@@ -2880,6 +3062,12 @@ test_driver_action_internally_cancelled_open (void)
   g_autoptr(GCancellable) cancellable = NULL;
   g_autoptr(GError) error = NULL;
   FpiDeviceFake *fake_dev;
+
+  if (!tod_check_version (dev_class, 1, "1.94.0"))
+    {
+      g_test_skip ("Feature not supported by TODv1 versions before 1.94.0");
+      return;
+    }
 
   dev_class->open = test_driver_action_is_cancelled_open_vfunc;
   device = g_object_new (FPI_TYPE_DEVICE_FAKE, NULL);
@@ -3030,11 +3218,20 @@ test_driver_action_error_all (void)
   g_assert_error (error, FP_DEVICE_ERROR, FP_DEVICE_ERROR_DATA_INVALID);
   g_clear_error (&error);
 
-  fake_dev->ret_error = fpi_device_error_new (FP_DEVICE_ERROR_DATA_INVALID);
-  g_assert_false (fp_device_clear_storage_sync (device, NULL, &error));
-  g_assert_true (fake_dev->last_called_function == dev_class->clear_storage);
-  g_assert_error (error, FP_DEVICE_ERROR, FP_DEVICE_ERROR_DATA_INVALID);
-  g_clear_error (&error);
+  if (tod_check_device_version (device, 1, "1.92.0"))
+    {
+      fake_dev->ret_error = fpi_device_error_new (FP_DEVICE_ERROR_DATA_INVALID);
+      g_assert_false (fp_device_clear_storage_sync (device, NULL, &error));
+      g_assert_true (fake_dev->last_called_function == dev_class->clear_storage);
+      g_assert_error (error, FP_DEVICE_ERROR, FP_DEVICE_ERROR_DATA_INVALID);
+      g_clear_error (&error);
+    }
+  else
+    {
+      g_assert_false (fp_device_clear_storage_sync (device, NULL, &error));
+      g_assert_error (error, FP_DEVICE_ERROR, FP_DEVICE_ERROR_NOT_SUPPORTED);
+      g_clear_error (&error);
+    }
 
   /* Test close last, as we can't operate on a closed device. */
   fake_dev->ret_error = fpi_device_error_new (FP_DEVICE_ERROR_DATA_INVALID);
@@ -3135,15 +3332,18 @@ test_driver_action_error_fallback_all (void)
   g_assert_error (error, FP_DEVICE_ERROR, FP_DEVICE_ERROR_GENERAL);
   g_clear_error (&error);
 
-  g_test_expect_message (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
-                         "*Device failed to pass an error to generic action "
-                         "error function*");
+  if (tod_check_device_version (device, 1, "1.92.0"))
+    {
+      g_test_expect_message (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,
+                             "*Device failed to pass an error to generic action "
+                             "error function*");
 
-  g_assert_false (fp_device_clear_storage_sync (device, NULL, &error));
-  g_test_assert_expected_messages ();
-  g_assert_true (fake_dev->last_called_function == dev_class->clear_storage);
-  g_assert_error (error, FP_DEVICE_ERROR, FP_DEVICE_ERROR_GENERAL);
-  g_clear_error (&error);
+      g_assert_false (fp_device_clear_storage_sync (device, NULL, &error));
+      g_test_assert_expected_messages ();
+      g_assert_true (fake_dev->last_called_function == dev_class->clear_storage);
+      g_assert_error (error, FP_DEVICE_ERROR, FP_DEVICE_ERROR_GENERAL);
+      g_clear_error (&error);
+    }
 
   /* Test close last, as we can't operate on a closed device. */
   g_test_expect_message (G_LOG_DOMAIN, G_LOG_LEVEL_WARNING,

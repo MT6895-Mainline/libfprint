@@ -17,6 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#define FP_COMPONENT "tod"
+
+#include "fpi-log.h"
 #include <libfprint/fprint.h>
 
 static void
@@ -33,8 +36,12 @@ test_context_has_no_devices (void)
   GPtrArray *devices;
   const char *old_drivers_dir = g_getenv ("FP_TOD_DRIVERS_DIR");
 
+  g_test_expect_message (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,
+                         "*Impossible to load the shared drivers dir Error "
+                         "opening directory*__HOPEFULLY_AN_INVALID_PATH*");
   g_setenv ("FP_TOD_DRIVERS_DIR", "__HOPEFULLY_AN_INVALID_PATH", TRUE);
   context = fp_context_new ();
+  g_test_assert_expected_messages ();
   devices = fp_context_get_devices (context);
   g_setenv ("FP_TOD_DRIVERS_DIR", old_drivers_dir, TRUE);
 
