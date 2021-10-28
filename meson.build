@@ -1,5 +1,5 @@
 project('libfprint', [ 'c', 'cpp' ],
-    version: '1.90.7+git20210222+tod1',
+    version: '1.94.1',
     license: 'LGPLv2.1+',
     default_options: [
         'buildtype=debugoptimized',
@@ -33,6 +33,7 @@ common_cflags = cc.get_supported_arguments([
     '-Wmissing-noreturn',
     '-Wpointer-arith',
     '-Wshadow',
+    '-Wswitch-enum',
     '-Wtype-limits',
     '-Wundef',
     '-Wunused',
@@ -86,6 +87,9 @@ mathlib_dep = cc.find_library('m', required: false)
 # The following dependencies are only used for tests
 cairo_dep = dependency('cairo', required: false)
 
+# introspection scanning and Gio-2.0.gir
+gobject_introspection = dependency('gobject-introspection-1.0', required: get_option('introspection'))
+
 # Drivers
 drivers = get_option('drivers').split(',')
 virtual_drivers = [
@@ -97,6 +101,7 @@ virtual_drivers = [
 default_drivers = [
     'upektc_img',
     'vfs5011',
+    'vfs7552',
     'aes3500',
     'aes4000',
     'aes1610',
@@ -108,14 +113,20 @@ default_drivers = [
     'vfs301',
     'vfs0050',
     'etes603',
+    'egis0570',
     'vcom5s',
     'synaptics',
     'elan',
+    'elanmoc',
     'uru4000',
     'upektc',
     'upeksonly',
     'upekts',
     'goodixmoc',
+    'nb1010',
+
+    # SPI
+    'elanspi',
 ]
 
 # FIXME: All the drivers should be fixed by adjusting the byte order.
@@ -135,6 +146,33 @@ if drivers == [ 'default' ]
     drivers = default_drivers
 endif
 
+driver_helper_mapping = {
+    'aes1610' : [ 'aeslib' ],
+    'aes1660' : [ 'aeslib', 'aesx660' ],
+    'aes2501' : [ 'aeslib' ],
+    'aes2550' : [ 'aeslib' ],
+    'aes2660' : [ 'aeslib', 'aesx660' ],
+    'aes3500' : [ 'aeslib', 'aes3k' ],
+    'aes4000' : [ 'aeslib', 'aes3k' ],
+    'uru4000' : [ 'nss' ],
+    'elanspi' : [ 'udev' ],
+    'virtual_image'          : [ 'virtual' ],
+    'virtual_device'         : [ 'virtual' ],
+    'virtual_device_storage' : [ 'virtual' ],
+}
+
+driver_helpers = []
+foreach driver : drivers
+    if driver in driver_helper_mapping
+        foreach helper : driver_helper_mapping[driver]
+            if helper not in driver_helpers
+                driver_helpers += helper
+            endif
+        endforeach
+    endif
+endforeach
+
+
 if drivers.length() == 0 or drivers[0] == ''
     error('Cannot build libfprint without drivers, please specify a valid value for the drivers option')
 endif
@@ -151,28 +189,60 @@ else
     endforeach
 endif
 
-nss_dep = dependency('', required: false)
-imaging_dep = dependency('', required: false)
-libfprint_conf.set10('HAVE_PIXMAN', false)
-foreach driver: drivers
-    if driver == 'uru4000'
-        nss_dep = dependency('nss', required: false)
-        if not nss_dep.found()
-            error('NSS is required for the URU4000/URU4500 driver')
+udev_rules = get_option('udev_rules')
+install_udev_rules = udev_rules.enabled()
+
+optional_deps = []
+
+# Resolve extra dependencies
+foreach i : driver_helpers
+    foreach d, helpers : driver_helper_mapping
+        if i in helpers
+            driver = d
+            break
         endif
-    endif
-    if driver == 'aes3500' or driver == 'aes4000'
+    endforeach
+
+    if i == 'aes3k'
         imaging_dep = dependency('pixman-1', required: false)
         if not imaging_dep.found()
-            error('pixman is required for imaging support')
+            error('pixman is required for @0@ and possibly others'.format(driver))
         endif
 
         libfprint_conf.set10('HAVE_PIXMAN', true)
-    endif
-    if not all_drivers.contains(driver)
-        error('Invalid driver \'' + driver + '\'')
+        optional_deps += imaging_dep
+    elif i == 'nss'
+        nss_dep = dependency('nss', required: false)
+        if not nss_dep.found()
+            error('nss is required for @0@ and possibly others'.format(driver))
+        endif
+
+        optional_deps += nss_dep
+    elif i == 'udev'
+        install_udev_rules = true
+
+        gudev_dep = dependency('gudev-1.0', required: false)
+        if not gudev_dep.found()
+            error('udev is required for SPI support')
+        endif
+
+        libfprint_conf.set10('HAVE_UDEV', true)
+
+        optional_deps += gudev_dep
     endif
 endforeach
+
+if udev_rules.disabled()
+    install_udev_rules = false
+endif
+
+if install_udev_rules
+    udev_rules_dir = get_option('udev_rules_dir')
+    if udev_rules_dir == 'auto'
+        udev_dep = dependency('udev')
+        udev_rules_dir = udev_dep.get_pkgconfig_variable('udevdir') + '/rules.d'
+    endif
+endif
 
 supported_drivers = []
 foreach driver: drivers
@@ -188,39 +258,29 @@ if default_drivers_are_enabled and supported_drivers != drivers
     default_drivers_are_enabled = false
 endif
 
-# Export the drivers' types to the core code
-drivers_type_list = []
-drivers_type_func = []
-drivers_type_list += '#include <glib-object.h>'
-drivers_type_list += '#include "fpi-context.h"'
-drivers_type_list += ''
-drivers_type_func += 'GArray *'
-drivers_type_func += 'fpi_get_driver_types (void)'
-drivers_type_func += '{'
-drivers_type_func += '  GArray *drivers = g_array_new (TRUE, FALSE, sizeof (GType));'
-drivers_type_func += '  GType t;'
-drivers_type_func += ''
-foreach driver: supported_drivers
-    drivers_type_list += 'extern GType (fpi_device_' + driver + '_get_type) (void);'
-    drivers_type_func += '  t = fpi_device_' + driver + '_get_type ();'
-    drivers_type_func += '  g_array_append_val (drivers, t);'
-    drivers_type_func += ''
-endforeach
-drivers_type_list += ''
-drivers_type_func += '  return drivers;'
-drivers_type_func += '}'
-
 root_inc = include_directories('.')
 
-if get_option('udev_rules')
+udev_hwdb = get_option('udev_hwdb')
+if not udev_hwdb.disabled()
+    # systemd v248 includes our autosuspend rules
+    udev_versioned_dep = dependency('udev', version: '>= 248', required: false)
     udev_hwdb_dir = get_option('udev_hwdb_dir')
+    if udev_hwdb.auto()
+        if udev_versioned_dep.found()
+            udev_hwdb_dir = ''
+        endif
+    else
+        if udev_versioned_dep.found()
+            warning('udev hwdb will be installed by both systemd and libfprint')
+        endif
+    endif
 
     if udev_hwdb_dir == 'auto'
         udev_dep = dependency('udev')
         udev_hwdb_dir = udev_dep.get_pkgconfig_variable('udevdir') + '/hwdb.d'
     endif
 else
-    udev_hwdb_dir = false
+    udev_hwdb_dir = ''
 endif
 
 if get_option('gtk-examples')
@@ -232,11 +292,15 @@ if get_option('gtk-examples')
     endif
 endif
 
+<<<<<<< HEAD
 libfprint_conf.set10('HAVE_LIBFPRINT_TOD', get_option('tod'))
+=======
+# Some dependency resolving happens inside here
+subdir('libfprint')
+>>>>>>> debian/1%1.94.1-1
 
 configure_file(output: 'config.h', configuration: libfprint_conf)
 
-subdir('libfprint')
 subdir('examples')
 if get_option('doc')
     gnome = import('gnome')

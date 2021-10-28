@@ -8,6 +8,9 @@ libfprint-2.so.2 libfprint-2-2 #MINVER#
  fp_device_capture@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_capture_finish@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_capture_sync@LIBFPRINT_2.0.0 1:1.90.1
+ fp_device_clear_storage@LIBFPRINT_2.0.0 1:1.94.1
+ fp_device_clear_storage_finish@LIBFPRINT_2.0.0 1:1.94.1
+ fp_device_clear_storage_sync@LIBFPRINT_2.0.0 1:1.94.1
  fp_device_close@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_close_finish@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_close_sync@LIBFPRINT_2.0.0 1:1.90.1
@@ -19,13 +22,17 @@ libfprint-2.so.2 libfprint-2-2 #MINVER#
  fp_device_enroll_sync@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_error_get_type@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_error_quark@LIBFPRINT_2.0.0 1:1.90.1
+ fp_device_feature_get_type@LIBFPRINT_2.0.0 1:1.94.1
  fp_device_get_device_id@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_get_driver@LIBFPRINT_2.0.0 1:1.90.1
+ fp_device_get_features@LIBFPRINT_2.0.0 1:1.94.1
  fp_device_get_finger_status@LIBFPRINT_2.0.0 1:1.90.4
  fp_device_get_name@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_get_nr_enroll_stages@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_get_scan_type@LIBFPRINT_2.0.0 1:1.90.1
+ fp_device_get_temperature@LIBFPRINT_2.0.0 1:1.94.1
  fp_device_get_type@LIBFPRINT_2.0.0 1:1.90.1
+ fp_device_has_feature@LIBFPRINT_2.0.0 1:1.94.1
  fp_device_has_storage@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_identify@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_identify_finish@LIBFPRINT_2.0.0 1:1.90.1
@@ -37,10 +44,16 @@ libfprint-2.so.2 libfprint-2-2 #MINVER#
  fp_device_open@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_open_finish@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_open_sync@LIBFPRINT_2.0.0 1:1.90.1
+ fp_device_resume@LIBFPRINT_2.0.0 1:1.94.1
+ fp_device_resume_finish@LIBFPRINT_2.0.0 1:1.94.1
+ fp_device_resume_sync@LIBFPRINT_2.0.0 1:1.94.1
  fp_device_retry_get_type@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_retry_quark@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_supports_capture@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_supports_identify@LIBFPRINT_2.0.0 1:1.90.1
+ fp_device_suspend@LIBFPRINT_2.0.0 1:1.94.1
+ fp_device_suspend_finish@LIBFPRINT_2.0.0 1:1.94.1
+ fp_device_suspend_sync@LIBFPRINT_2.0.0 1:1.94.1
  fp_device_type_get_type@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_verify@LIBFPRINT_2.0.0 1:1.90.1
  fp_device_verify_finish@LIBFPRINT_2.0.0 1:1.90.1
@@ -85,3 +98,4 @@ libfprint-2.so.2 libfprint-2-2 #MINVER#
  fp_print_set_finger@LIBFPRINT_2.0.0 1:1.90.1
  fp_print_set_username@LIBFPRINT_2.0.0 1:1.90.1
  fp_scan_type_get_type@LIBFPRINT_2.0.0 1:1.90.1
+ fp_temperature_get_type@LIBFPRINT_2.0.0 1:1.94.1

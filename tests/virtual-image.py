@@ -21,14 +21,6 @@ except Exception as e:
 
 FPrint = None
 
-# Re-run the test with the passed wrapper if set
-wrapper = os.getenv('LIBFPRINT_TEST_WRAPPER')
-if wrapper:
-    wrap_cmd = wrapper.split(' ') + [sys.executable, os.path.abspath(__file__)] + \
-        sys.argv[1:]
-    os.unsetenv('LIBFPRINT_TEST_WRAPPER')
-    sys.exit(subprocess.check_call(wrap_cmd))
-
 def load_image(img):
     png = cairo.ImageSurface.create_from_png(img)
 
@@ -139,6 +131,20 @@ class VirtualImage(unittest.TestCase):
         self.con.sendall(encoded_img)
         while iterate and ctx.pending():
             ctx.iteration(False)
+
+    def test_features(self):
+        self.assertTrue(self.dev.has_feature(FPrint.DeviceFeature.CAPTURE))
+        self.assertTrue(self.dev.has_feature(FPrint.DeviceFeature.IDENTIFY))
+        self.assertTrue(self.dev.has_feature(FPrint.DeviceFeature.VERIFY))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.DUPLICATES_CHECK))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.STORAGE))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.STORAGE_LIST))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.STORAGE_DELETE))
+        self.assertFalse(self.dev.has_feature(FPrint.DeviceFeature.STORAGE_CLEAR))
+        self.assertEqual(self.dev.get_features(),
+                         FPrint.DeviceFeature.CAPTURE |
+                         FPrint.DeviceFeature.IDENTIFY |
+                         FPrint.DeviceFeature.VERIFY)
 
     def test_capture_prevents_close(self):
         cancel = Gio.Cancellable()

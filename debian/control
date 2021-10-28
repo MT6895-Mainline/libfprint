@@ -3,14 +3,14 @@ Priority: optional
 Section: libs
 Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: FingerForce Team <fingerforce-devel@lists.alioth.debian.org>
-Uploaders: Ulises Vitulli <dererk@debian.org>,
-           Marco Trevisan <marco@ubuntu.com>
+Uploaders: Marco Trevisan <marco@ubuntu.com>
 Build-Depends: debhelper-compat (= 13),
                gobject-introspection,
                gtk-doc-tools,
                libcairo-dev <!nocheck>,
                libgirepository1.0-dev,
                libglib2.0-dev (>= 2.56),
+               libgudev-1.0-dev,
                libgusb-dev (>= 0.3.0),
                libnss3-dev,
                libpixman-1-dev,
