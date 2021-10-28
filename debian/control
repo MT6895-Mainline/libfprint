@@ -147,6 +147,7 @@ Multi-Arch: same
 Depends: libfprint-2-tod1 (= ${binary:Version}),
          libfprint-2-dev (= ${binary:Version}),
          libglib2.0-dev (>= 2.56),
+         libgudev-1.0-dev,
          libgusb-dev (>= 0.2.0),
          libpixman-1-dev,
          libnss3-dev,
