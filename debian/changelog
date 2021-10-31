@@ -1,8 +1,8 @@
-libfprint (1:1.94.1+tod1-0ubuntu2) UNRELEASED; urgency=medium
+libfprint (1:1.94.1+tod1-0ubuntu2) jammy; urgency=medium
 
   * debian/patches: Ensure that structures padding is constant in all archs
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Sun, 31 Oct 2021 23:13:26 +0100
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Sun, 31 Oct 2021 23:13:40 +0100
 
 libfprint (1:1.94.1+tod1-0ubuntu1) jammy; urgency=medium
 
