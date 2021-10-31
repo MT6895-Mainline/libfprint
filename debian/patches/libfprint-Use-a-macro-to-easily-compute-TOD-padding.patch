@@ -1,0 +1,326 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Sun, 31 Oct 2021 22:22:56 +0100
+Subject: libfprint: Use a macro to easily compute TOD padding
+
+---
+ libfprint/fpi-assembling.h                |  5 ++++-
+ libfprint/fpi-device.h                    | 23 +++++++++-------------
+ libfprint/fpi-image-device.h              |  2 +-
+ libfprint/fpi-image.h                     |  3 ++-
+ libfprint/fpi-spi-transfer.h              |  2 +-
+ libfprint/fpi-usb-transfer.h              |  3 +--
+ libfprint/tod/tod-macros.h                | 32 +++++++++++++++++++++++++++++++
+ tests/tod-drivers/base-fp-device.h        |  2 ++
+ tests/tod-drivers/base-fpi-device.h       | 27 ++++++++++----------------
+ tests/tod-drivers/base-fpi-image-device.h |  2 +-
+ tests/tod-drivers/base-fpi-image.h        |  4 +++-
+ tests/tod-drivers/base-fpi-spi.h          |  2 +-
+ tests/tod-drivers/base-fpi-usb.h          |  3 +--
+ 13 files changed, 68 insertions(+), 42 deletions(-)
+ create mode 100644 libfprint/tod/tod-macros.h
+
+diff --git a/libfprint/fpi-assembling.h b/libfprint/fpi-assembling.h
+index b56aa26..808b66b 100644
+--- a/libfprint/fpi-assembling.h
++++ b/libfprint/fpi-assembling.h
+@@ -20,6 +20,7 @@
+ #pragma once
+ 
+ #include "fp-image.h"
++#include "tod/tod-macros.h"
+ 
+ /**
+  * fpi_frame:
+@@ -110,7 +111,9 @@ struct fpi_line_asmbl_ctx
+   unsigned char (*get_pixel)(struct fpi_line_asmbl_ctx *ctx,
+                              GSList                    *line,
+                              unsigned int               x);
+-  gpointer _padding_dummy[32];
++
++  /*< private >*/
++  TOD_PADDING (32, 0);
+ };
+ 
+ FpImage *fpi_assemble_lines (struct fpi_line_asmbl_ctx *ctx,
+diff --git a/libfprint/fpi-device.h b/libfprint/fpi-device.h
+index 299b1d7..76f07c4 100644
+--- a/libfprint/fpi-device.h
++++ b/libfprint/fpi-device.h
+@@ -23,6 +23,7 @@
+ #include "fp-device.h"
+ #include "fp-image.h"
+ #include "fpi-print.h"
++#include "tod/tod-macros.h"
+ 
+ /**
+  * FpiDeviceUdevSubtype:
+@@ -73,13 +74,10 @@ struct _FpIdEntry
+ 
+   /*< private >*/
+   /* padding for future expansion */
+-#if GLIB_SIZEOF_VOID_P == 8
+-  gpointer _padding_dummy[13];
+-#elif GLIB_SIZEOF_VOID_P == 4
+-  gpointer _padding_dummy[11];
+-#else
+-  G_STATIC_ASSERT("Unexpected pointer size")
+-#endif
++  TOD_PADDING_ALIGNED (16,
++                       sizeof (guint) * 2 +
++                       sizeof (FpiDeviceUdevSubtypeFlags) +
++                       sizeof (gpointer));
+ };
+ 
+ /**
+@@ -192,13 +190,10 @@ struct _FpDeviceClass
+ 
+   /*< private >*/
+   /* padding for future expansion */
+-#if GLIB_SIZEOF_VOID_P == 8
+-  gpointer _padding_dummy[27];
+-#elif GLIB_SIZEOF_VOID_P == 4
+-  gpointer _padding_dummy[26];
+-#else
+-  G_STATIC_ASSERT("Unexpected pointer size")
+-#endif
++  TOD_PADDING_ALIGNED8 (32,
++                        sizeof (FpDeviceFeature) +
++                        sizeof (gint32) * 2 +
++                        sizeof (gpointer) * 3);
+ };
+ 
+ void fpi_device_class_auto_initialize_features (FpDeviceClass *device_class);
+diff --git a/libfprint/fpi-image-device.h b/libfprint/fpi-image-device.h
+index f1a6efd..63e70b1 100644
+--- a/libfprint/fpi-image-device.h
++++ b/libfprint/fpi-image-device.h
+@@ -117,7 +117,7 @@ struct _FpImageDeviceClass
+ 
+   /*< private >*/
+   /* padding for future expansion */
+-  gpointer _padding_dummy[32];
++  TOD_PADDING (32, 0);
+ };
+ 
+ void fpi_image_device_set_bz3_threshold (FpImageDevice *self,
+diff --git a/libfprint/fpi-image.h b/libfprint/fpi-image.h
+index 0ae19f9..7c54a71 100644
+--- a/libfprint/fpi-image.h
++++ b/libfprint/fpi-image.h
+@@ -21,6 +21,7 @@
+ #pragma once
+ 
+ #include "fp-image.h"
++#include "tod/tod-macros.h"
+ 
+ /**
+  * FpiImageFlags:
+@@ -69,7 +70,7 @@ struct _FpImage
+   GPtrArray *minutiae;
+   guint      ref_count;
+ 
+-  gpointer   _padding_dummy[32];
++  TOD_PADDING (32, 0);
+ };
+ 
+ gint fpi_std_sq_dev (const guint8 *buf,
+diff --git a/libfprint/fpi-spi-transfer.h b/libfprint/fpi-spi-transfer.h
+index 0b75673..e545e6a 100644
+--- a/libfprint/fpi-spi-transfer.h
++++ b/libfprint/fpi-spi-transfer.h
+@@ -75,7 +75,7 @@ struct _FpiSpiTransfer
+   GDestroyNotify free_buffer_rd;
+ 
+   /* padding for future expansion */
+-  gpointer _padding_dummy[32];
++  TOD_PADDING (32, 0);
+ };
+ 
+ GType              fpi_spi_transfer_get_type (void) G_GNUC_CONST;
+diff --git a/libfprint/fpi-usb-transfer.h b/libfprint/fpi-usb-transfer.h
+index 7f0deac..8b862b4 100644
+--- a/libfprint/fpi-usb-transfer.h
++++ b/libfprint/fpi-usb-transfer.h
+@@ -103,9 +103,8 @@ struct _FpiUsbTransfer
+   /* Data free function */
+   GDestroyNotify free_buffer;
+ 
+-  /*< private >*/
+   /* padding for future expansion */
+-  gpointer _padding_dummy[32];
++  TOD_PADDING (32, 0);
+ };
+ 
+ GType              fpi_usb_transfer_get_type (void) G_GNUC_CONST;
+diff --git a/libfprint/tod/tod-macros.h b/libfprint/tod/tod-macros.h
+new file mode 100644
+index 0000000..4adfd94
+--- /dev/null
++++ b/libfprint/tod/tod-macros.h
+@@ -0,0 +1,32 @@
++/*
++ * Shared library loader for libfprint
++ * Copyright (C) 2021 Marco Trevisan <marco.trevisan@canonical.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#pragma once
++
++#define TOD_PADDING(original, wasted) \
++  char _tod_expansion_padding[(GLIB_SIZEOF_VOID_P * (original)) - (wasted)];
++
++#define TOD_PADDING_ALIGNED(original, wasted) \
++  TOD_PADDING (original, (wasted) + GLIB_SIZEOF_VOID_P)
++
++#define TOD_PADDING_ALIGNED4(original, wasted) \
++  TOD_PADDING (original, (wasted) + (GLIB_SIZEOF_VOID_P == 4 ? GLIB_SIZEOF_VOID_P : 0))
++
++#define TOD_PADDING_ALIGNED8(original, wasted) \
++  TOD_PADDING (original, (wasted) + (GLIB_SIZEOF_VOID_P == 8 ? GLIB_SIZEOF_VOID_P : 0))
+diff --git a/tests/tod-drivers/base-fp-device.h b/tests/tod-drivers/base-fp-device.h
+index 600bdf9..5d3bbc2 100644
+--- a/tests/tod-drivers/base-fp-device.h
++++ b/tests/tod-drivers/base-fp-device.h
+@@ -19,6 +19,8 @@
+ 
+ #pragma once
+ 
++#include "tod/tod-macros.h"
++
+ typedef struct _FpDevice FpDevice;
+ 
+ typedef enum {
+diff --git a/tests/tod-drivers/base-fpi-device.h b/tests/tod-drivers/base-fpi-device.h
+index 9be6a72..0e84761 100644
+--- a/tests/tod-drivers/base-fpi-device.h
++++ b/tests/tod-drivers/base-fpi-device.h
+@@ -43,7 +43,7 @@ struct _FpIdEntryTODV1_90_1
+ 
+   /*< private >*/
+   /* padding for future expansion */
+-  gpointer _padding_dummy[16];
++  TOD_PADDING (16, 0);
+ };
+ 
+ struct _FpDeviceClassTODV1_90_1
+@@ -78,7 +78,7 @@ struct _FpDeviceClassTODV1_90_1
+ 
+   /*< private >*/
+   /* padding for future expansion */
+-  gpointer _padding_dummy[32];
++  TOD_PADDING (32, 0);
+ };
+ 
+ typedef struct _FpDeviceClassTODV1_90_1 FpDeviceClassTODV1_90_1;
+@@ -172,13 +172,9 @@ struct _FpIdEntryTODV1_92_0
+ 
+   /*< private >*/
+   /* padding for future expansion */
+-#if GLIB_SIZEOF_VOID_P == 8
+-  gpointer _padding_dummy[13];
+-#elif GLIB_SIZEOF_VOID_P == 4
+-  gpointer _padding_dummy[11];
+-#else
+-  G_STATIC_ASSERT("Unexpected pointer size")
+-#endif
++  TOD_PADDING_ALIGNED (16, sizeof (guint) * 2 +
++                       sizeof (FpiDeviceUdevSubtypeFlagsTODV1_92_0) +
++                       sizeof (gpointer));
+ };
+ 
+ typedef struct _FpIdEntryTODV1_92_0 FpIdEntryTODV1_92_0;
+@@ -217,7 +213,7 @@ struct _FpDeviceClassTODV1_92_0
+ 
+   /*< private >*/
+   /* padding for future expansion */
+-  gpointer _padding_dummy[31];
++  TOD_PADDING (32, sizeof (FpDeviceFeatureTODV1_92_0));
+ };
+ 
+ typedef struct _FpDeviceClassTODV1_92_0 FpDeviceClassTODV1_92_0;
+@@ -266,13 +262,10 @@ struct _FpDeviceClassTODV1_94_0
+ 
+   /*< private >*/
+   /* padding for future expansion */
+-#if GLIB_SIZEOF_VOID_P == 8
+-  gpointer _padding_dummy[27];
+-#elif GLIB_SIZEOF_VOID_P == 4
+-  gpointer _padding_dummy[26];
+-#else
+-  G_STATIC_ASSERT("Unexpected pointer size")
+-#endif
++  TOD_PADDING_ALIGNED8 (32,
++                        sizeof (FpDeviceFeatureTODV1_94_0) +
++                        sizeof (gint32) * 2 +
++                        sizeof (gpointer) * 3)
+ };
+ 
+ typedef struct _FpDeviceClassTODV1_94_0 FpDeviceClassTODV1_94_0;
+diff --git a/tests/tod-drivers/base-fpi-image-device.h b/tests/tod-drivers/base-fpi-image-device.h
+index 5d83d1e..4228e04 100644
+--- a/tests/tod-drivers/base-fpi-image-device.h
++++ b/tests/tod-drivers/base-fpi-image-device.h
+@@ -57,5 +57,5 @@ typedef struct _FpImageDeviceClassTODV1_90_1
+ 
+   /*< private >*/
+   /* padding for future expansion */
+-  gpointer _padding_dummy[32];
++  TOD_PADDING (32, 0);
+ } FpImageDeviceClassTODV1_90_1;
+diff --git a/tests/tod-drivers/base-fpi-image.h b/tests/tod-drivers/base-fpi-image.h
+index 22d0c77..172fce8 100644
+--- a/tests/tod-drivers/base-fpi-image.h
++++ b/tests/tod-drivers/base-fpi-image.h
+@@ -22,6 +22,8 @@
+ #include <glib.h>
+ #include <glib-object.h>
+ 
++#include "tod/tod-macros.h"
++
+ typedef struct _FpImage           FpImage;
+ typedef struct _FpImageTODV1_90_1 FpImageTODV1_90_1;
+ 
+@@ -58,5 +60,5 @@ struct _FpImageTODV1_90_1
+   GPtrArray *minutiae;
+   guint      ref_count;
+ 
+-  gpointer   _padding_dummy[32];
++  TOD_PADDING (32, 0);
+ };
+diff --git a/tests/tod-drivers/base-fpi-spi.h b/tests/tod-drivers/base-fpi-spi.h
+index 73aa293..e2e9bf3 100644
+--- a/tests/tod-drivers/base-fpi-spi.h
++++ b/tests/tod-drivers/base-fpi-spi.h
+@@ -56,5 +56,5 @@ struct _FpiSpiTransferTODV1_92_0
+   GDestroyNotify free_buffer_rd;
+ 
+   /* padding for future expansion */
+-  gpointer _padding_dummy[32];
++  TOD_PADDING (32, 0);
+ };
+diff --git a/tests/tod-drivers/base-fpi-usb.h b/tests/tod-drivers/base-fpi-usb.h
+index 5542a10..3637e6f 100644
+--- a/tests/tod-drivers/base-fpi-usb.h
++++ b/tests/tod-drivers/base-fpi-usb.h
+@@ -75,7 +75,6 @@ struct _FpiUsbTransferTODV1_90_1
+   /* Data free function */
+   GDestroyNotify free_buffer;
+ 
+-  /*< private >*/
+   /* padding for future expansion */
+-  gpointer _padding_dummy[32];
++  TOD_PADDING (32, 0);
+ };
