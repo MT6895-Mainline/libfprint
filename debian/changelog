@@ -1,6 +1,7 @@
 libfprint (1:1.94.2+tod1-0ubuntu1) UNRELEASED; urgency=medium
 
   * New upstream release (LP: #1950438)
+  * debian/libfprint-2-2.postinst: Devices triggers updated
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 14 Dec 2021 19:46:09 +0100
 
