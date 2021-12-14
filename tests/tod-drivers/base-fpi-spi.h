@@ -56,5 +56,5 @@ struct _FpiSpiTransferTODV1_92_0
   GDestroyNotify free_buffer_rd;
 
   /* padding for future expansion */
-  gpointer _padding_dummy[32];
+  TOD_PADDING (32, 0);
 };

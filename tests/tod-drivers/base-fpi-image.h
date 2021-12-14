@@ -22,6 +22,8 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include "tod/tod-macros.h"
+
 typedef struct _FpImage           FpImage;
 typedef struct _FpImageTODV1_90_1 FpImageTODV1_90_1;
 
@@ -58,5 +60,5 @@ struct _FpImageTODV1_90_1
   GPtrArray *minutiae;
   guint      ref_count;
 
-  gpointer   _padding_dummy[32];
+  TOD_PADDING (32, 0);
 };

@@ -75,7 +75,6 @@ struct _FpiUsbTransferTODV1_90_1
   /* Data free function */
   GDestroyNotify free_buffer;
 
-  /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[32];
+  TOD_PADDING (32, 0);
 };

@@ -21,6 +21,7 @@
 #pragma once
 
 #include "fp-image.h"
+#include "tod/tod-macros.h"
 
 /**
  * FpiImageFlags:
@@ -69,7 +70,7 @@ struct _FpImage
   GPtrArray *minutiae;
   guint      ref_count;
 
-  gpointer   _padding_dummy[32];
+  TOD_PADDING (32, 0);
 };
 
 gint fpi_std_sq_dev (const guint8 *buf,

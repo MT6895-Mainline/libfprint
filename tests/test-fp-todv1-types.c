@@ -109,13 +109,13 @@ check_compatiblity_auto (GType old_type, GType current_type)
   type ## TODV ## major ## _ ## minor ## _ ## micro
 
 #define check_struct_size(type, major, minor, micro) \
-  g_debug ("Checking " # type " size  @ " G_STRLOC); \
+  g_debug ("Checking " # type " v" #major "." #minor "." #micro " size  @ " G_STRLOC); \
   g_assert_cmpuint (sizeof (tod_versioned_type (type, major, minor, micro)), \
                     ==, \
                     sizeof (type))
 
 #define check_struct_member(type, major, minor, micro, member) \
-  g_debug ("Checking " # type "'s " # member " offset @ " G_STRLOC); \
+  g_debug ("Checking " # type " v" #major "." #minor "." #micro "'s " # member " offset @ " G_STRLOC); \
   g_assert_cmpuint (G_STRUCT_OFFSET (tod_versioned_type (type, major, minor, micro), member), \
                     ==, \
                     G_STRUCT_OFFSET (type, member))
@@ -193,6 +193,9 @@ test_device_type (void)
   check_struct_member (FpDeviceClass, 1, 94, 0, list);
   check_struct_member (FpDeviceClass, 1, 94, 0, delete);
   check_struct_member (FpDeviceClass, 1, 94, 0, cancel);
+  check_struct_member (FpDeviceClass, 1, 94, 0, clear_storage);
+  check_struct_member (FpDeviceClass, 1, 94, 0, suspend);
+  check_struct_member (FpDeviceClass, 1, 94, 0, resume);
 
   check_struct_member (FpDeviceClass, 1, 94, 0, id);
   check_struct_member (FpDeviceClass, 1, 94, 0, full_name);
@@ -203,6 +206,9 @@ test_device_type (void)
   check_struct_member (FpDeviceClass, 1, 94, 0, scan_type);
 
   check_struct_member (FpDeviceClass, 1, 94, 0, features);
+
+  check_struct_member (FpDeviceClass, 1, 94, 0, temp_hot_seconds);
+  check_struct_member (FpDeviceClass, 1, 94, 0, temp_cold_seconds);
 }
 
 static void

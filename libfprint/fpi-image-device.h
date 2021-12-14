@@ -117,7 +117,7 @@ struct _FpImageDeviceClass
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[32];
+  TOD_PADDING (32, 0);
 };
 
 void fpi_image_device_set_bz3_threshold (FpImageDevice *self,
