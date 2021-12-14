@@ -57,5 +57,5 @@ typedef struct _FpImageDeviceClassTODV1_90_1
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[32];
+  TOD_PADDING (32, 0);
 } FpImageDeviceClassTODV1_90_1;

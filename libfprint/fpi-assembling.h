@@ -20,6 +20,7 @@
 #pragma once
 
 #include "fp-image.h"
+#include "tod/tod-macros.h"
 
 /**
  * fpi_frame:
@@ -110,7 +111,9 @@ struct fpi_line_asmbl_ctx
   unsigned char (*get_pixel)(struct fpi_line_asmbl_ctx *ctx,
                              GSList                    *line,
                              unsigned int               x);
-  gpointer _padding_dummy[32];
+
+  /*< private >*/
+  TOD_PADDING (32, 0);
 };
 
 FpImage *fpi_assemble_lines (struct fpi_line_asmbl_ctx *ctx,

@@ -43,7 +43,7 @@ struct _FpIdEntryTODV1_90_1
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[16];
+  TOD_PADDING (16, 0);
 };
 
 struct _FpDeviceClassTODV1_90_1
@@ -78,7 +78,7 @@ struct _FpDeviceClassTODV1_90_1
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[32];
+  TOD_PADDING (32, 0);
 };
 
 typedef struct _FpDeviceClassTODV1_90_1 FpDeviceClassTODV1_90_1;
@@ -172,7 +172,9 @@ struct _FpIdEntryTODV1_92_0
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[13];
+  TOD_PADDING_ALIGNED (16, sizeof (guint) * 2 +
+                       sizeof (FpiDeviceUdevSubtypeFlagsTODV1_92_0) +
+                       sizeof (gpointer));
 };
 
 typedef struct _FpIdEntryTODV1_92_0 FpIdEntryTODV1_92_0;
@@ -211,7 +213,7 @@ struct _FpDeviceClassTODV1_92_0
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[31];
+  TOD_PADDING (32, sizeof (FpDeviceFeatureTODV1_92_0));
 };
 
 typedef struct _FpDeviceClassTODV1_92_0 FpDeviceClassTODV1_92_0;
@@ -260,7 +262,10 @@ struct _FpDeviceClassTODV1_94_0
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[27];
+  TOD_PADDING_ALIGNED8 (32,
+                        sizeof (FpDeviceFeatureTODV1_94_0) +
+                        sizeof (gint32) * 2 +
+                        sizeof (gpointer) * 3)
 };
 
 typedef struct _FpDeviceClassTODV1_94_0 FpDeviceClassTODV1_94_0;

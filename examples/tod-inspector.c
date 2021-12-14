@@ -47,6 +47,24 @@ id_table_to_string (FpDeviceType     device_type,
           if (entry->vid)
             value = g_strdup_printf ("%04x:%04x", entry->vid, entry->pid);
         }
+      else if (device_type == FP_DEVICE_TYPE_UDEV)
+        {
+          if (entry->hid_id.vid)
+            {
+              g_autofree gchar *udev_flags = NULL;
+
+              udev_flags = g_flags_to_string (fpi_device_udev_subtype_flags_get_type (),
+                                              entry->udev_types);
+              value = g_strdup_printf ("%s (%04x:%04x) [%s]",
+                                       entry->spi_acpi_id,
+                                       entry->hid_id.vid, entry->hid_id.pid,
+                                       udev_flags);
+            }
+          else
+            {
+              value = g_strdup (entry->spi_acpi_id);
+            }
+        }
       else
         {
           return g_strdup ("Unsupported device type");
@@ -115,6 +133,8 @@ main (void)
       g_print ("Type: %s\n", device_type_to_string (cls->type));
       g_print ("Enroll stages: %d\n", cls->nr_enroll_stages);
       g_print ("Scan type: %s\n", scan_type_to_string (cls->scan_type));
+      g_print ("Seconds to get Hot: %d\n", cls->temp_hot_seconds);
+      g_print ("Seconds to get Cold: %d\n", cls->temp_cold_seconds);
       g_print ("Supported Devices: %s\n", id_table);
       g_print ("Supported features: %s\n", features);
       g_print ("Implemented VFuncs:\n");
@@ -122,12 +142,15 @@ main (void)
       g_print ("  probe: %s\n", cls->probe ? "true" : "false");
       g_print ("  open: %s\n", cls->open ? "true" : "false");
       g_print ("  close: %s\n", cls->close ? "true" : "false");
+      g_print ("  suspend: %s\n", cls->suspend ? "true" : "false");
+      g_print ("  resume: %s\n", cls->resume ? "true" : "false");
       g_print ("  enroll: %s\n", cls->enroll ? "true" : "false");
       g_print ("  verify: %s\n", cls->verify ? "true" : "false");
       g_print ("  identify: %s\n", cls->identify ? "true" : "false");
       g_print ("  capture: %s\n", cls->capture ? "true" : "false");
       g_print ("  list: %s\n", cls->list ? "true" : "false");
       g_print ("  delete: %s\n", cls->delete ? "true" : "false");
+      g_print ("  clear_storage: %s\n", cls->clear_storage ? "true" : "false");
       g_print ("  cancel: %s\n", cls->cancel ? "true" : "false");
 
       if (i < shared_drivers->len - 1)

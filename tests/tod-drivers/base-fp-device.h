@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "tod/tod-macros.h"
+
 typedef struct _FpDevice FpDevice;
 
 typedef enum {

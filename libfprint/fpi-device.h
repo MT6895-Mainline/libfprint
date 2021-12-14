@@ -23,11 +23,14 @@
 #include "fp-device.h"
 #include "fp-image.h"
 #include "fpi-print.h"
+#include "tod/tod-macros.h"
 
 /**
- * FpiDeviceUdevSubtype:
+ * FpiDeviceUdevSubtypeFlags:
  * @FPI_DEVICE_UDEV_SUBTYPE_SPIDEV: The device requires an spidev node
  * @FPI_DEVICE_UDEV_SUBTYPE_HIDRAW: The device requires a hidraw node
+ *
+ * Bitfield of required hardware resources for a udev-backed device.
  */
 typedef enum {
   FPI_DEVICE_UDEV_SUBTYPE_SPIDEV = 1 << 0,
@@ -73,7 +76,10 @@ struct _FpIdEntry
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[13];
+  TOD_PADDING_ALIGNED (16,
+                       sizeof (guint) * 2 +
+                       sizeof (FpiDeviceUdevSubtypeFlags) +
+                       sizeof (gpointer));
 };
 
 /**
@@ -186,7 +192,10 @@ struct _FpDeviceClass
 
   /*< private >*/
   /* padding for future expansion */
-  gpointer _padding_dummy[27];
+  TOD_PADDING_ALIGNED8 (32,
+                        sizeof (FpDeviceFeature) +
+                        sizeof (gint32) * 2 +
+                        sizeof (gpointer) * 3);
 };
 
 void fpi_device_class_auto_initialize_features (FpDeviceClass *device_class);
