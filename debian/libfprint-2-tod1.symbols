@@ -215,6 +215,7 @@ libfprint-2-tod.so.1 libfprint-2-tod1 #MINVER#
  fpi_ssm_next_state_delayed@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
  fpi_ssm_next_state_delayed_1_90@LIBFPRINT_TOD_1.0.0 1:1.94.1+tod1
  fpi_ssm_set_data@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_ssm_silence_debug@LIBFPRINT_TOD_1_1.94 1:1.94.3+tod1
  fpi_ssm_spi_transfer_cb@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
  fpi_ssm_spi_transfer_with_weak_pointer_cb@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
  fpi_ssm_start@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
