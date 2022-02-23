@@ -283,6 +283,7 @@ test_device_public_enums (void)
   check_type_compatibility (FP_TYPE_DEVICE_ERROR, 1, 94, 0);
   check_type_compatibility (FP_TYPE_DEVICE_FEATURE, 1, 92, 0);
   check_type_compatibility (FP_TYPE_DEVICE_FEATURE, 1, 94, 0);
+  check_type_compatibility (FP_TYPE_DEVICE_FEATURE, 1, 94, 3);
   check_type_compatibility (FP_TYPE_TEMPERATURE, 1, 94, 0);
   check_type_compatibility (FPI_TYPE_DEVICE_UDEV_SUBTYPE_FLAGS, 1, 92, 0);
 }

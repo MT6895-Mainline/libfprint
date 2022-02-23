@@ -75,6 +75,10 @@ pkgconfig.generate(libfprint_tod,
     ]
 )
 
+tod_local_headers = [
+    'tod-macros.h',
+]
+
 tod_headers = []
 extra_libfprint_headers = [
     'drivers_api.h',
@@ -94,4 +98,8 @@ custom_target('tod_fpi_enums_headers',
 
 install_headers(tod_headers,
     subdir: tod_subpath
+)
+
+install_headers(tod_local_headers,
+    subdir: tod_subpath / 'tod',
 )
