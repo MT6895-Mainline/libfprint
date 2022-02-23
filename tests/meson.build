@@ -279,7 +279,6 @@ if get_option('tod')
     )
 
     fp_todv1_enums = gnome.mkenums_simple('fp-todv1-enums',
-        source_dir: 'tod-drivers',
         sources: [
             'tod-drivers/base-fp-device.h',
             'tod-drivers/base-fp-print.h',
@@ -326,6 +325,7 @@ if get_option('tod')
             'v1+1.90.3',
             'v1+1.90.5',
             'v1+1.94.0',
+            'v1+1.94.3',
         ]
 
         foreach tod_version: tod_test_versions
