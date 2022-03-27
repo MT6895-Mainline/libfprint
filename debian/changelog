@@ -1,4 +1,4 @@
-libfprint (1:1.94.3+tod1-0ubuntu1) UNRELEASED; urgency=medium
+libfprint (1:1.94.3+tod1-0ubuntu1) jammy; urgency=medium
 
   * New upstream release (LP: #1944369)
   * debian/libfprint-2-2.postinst: Devices triggers updated
@@ -6,7 +6,7 @@ libfprint (1:1.94.3+tod1-0ubuntu1) UNRELEASED; urgency=medium
   * debian/docs: Update README name to use markdown file
   * tod: Ensure we install tod-macros.h header
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Sun, 27 Mar 2022 23:43:24 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Sun, 27 Mar 2022 23:48:11 +0200
 
 libfprint (1:1.94.2+tod1-0ubuntu1) jammy; urgency=medium
 
