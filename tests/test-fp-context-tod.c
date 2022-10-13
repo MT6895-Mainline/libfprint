@@ -20,6 +20,7 @@
 #define FP_COMPONENT "tod"
 
 #include "fpi-log.h"
+#include "fpi-device.h"
 #include <libfprint/fprint.h>
 
 static void
@@ -77,6 +78,19 @@ test_context_has_fake_device (void)
     }
 
   g_assert_true (FP_IS_DEVICE (fake_device));
+
+  if (FP_DEVICE_GET_CLASS (fake_device)->open)
+    {
+      GCancellable *cancellable;
+      g_assert_true (fp_device_open_sync (fake_device, NULL, NULL));
+      g_assert_false (fp_device_open_sync (fake_device, NULL, NULL));
+      g_assert_true (fp_device_close_sync (fake_device, NULL, NULL));
+
+      cancellable = g_cancellable_new ();
+      g_cancellable_cancel (cancellable);
+      g_assert_false (fp_device_open_sync (fake_device, cancellable, NULL));
+      g_clear_object (&cancellable);
+    }
 }
 
 static void
