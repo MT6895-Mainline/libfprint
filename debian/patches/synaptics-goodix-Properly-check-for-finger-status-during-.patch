@@ -1,0 +1,40 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Wed, 28 Sep 2022 01:21:31 +0200
+Subject: synaptics,
+ goodix: Properly check for finger status during enroll progress
+
+It may contain other values, but for sure we finger must be neeeded
+---
+ tests/goodixmoc/custom.py | 2 +-
+ tests/synaptics/custom.py | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+ mode change 100755 => 100644 tests/goodixmoc/custom.py
+
+diff --git a/tests/goodixmoc/custom.py b/tests/goodixmoc/custom.py
+old mode 100755
+new mode 100644
+index 38fdd26..73f90a5
+--- a/tests/goodixmoc/custom.py
++++ b/tests/goodixmoc/custom.py
+@@ -31,7 +31,7 @@ d.clear_storage_sync()
+ template = FPrint.Print.new(d)
+ 
+ def enroll_progress(*args):
+-    assert d.get_finger_status() == FPrint.FingerStatusFlags.NEEDED
++    assert d.get_finger_status() & FPrint.FingerStatusFlags.NEEDED
+     print('enroll progress: ' + str(args))
+ 
+ def identify_done(dev, res):
+diff --git a/tests/synaptics/custom.py b/tests/synaptics/custom.py
+index 3e48341..dae651b 100755
+--- a/tests/synaptics/custom.py
++++ b/tests/synaptics/custom.py
+@@ -29,7 +29,7 @@ d.clear_storage_sync()
+ template = FPrint.Print.new(d)
+ 
+ def enroll_progress(*args):
+-    assert d.get_finger_status() == FPrint.FingerStatusFlags.NEEDED
++    assert d.get_finger_status() & FPrint.FingerStatusFlags.NEEDED
+     print('enroll progress: ' + str(args))
+ 
+ # List, enroll, list, verify, delete, list

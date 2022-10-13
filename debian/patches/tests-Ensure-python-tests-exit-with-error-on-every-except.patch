@@ -1,0 +1,110 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Wed, 28 Sep 2022 01:22:15 +0200
+Subject: tests: Ensure python tests exit with error on every exception
+
+We ignored assertions happening on callbacks as they only raise
+exceptions that does not stop the execution.
+
+So ensure that this is happening in all the tests as synaptics was
+doing already
+---
+ tests/capture.py          | 9 +++++++--
+ tests/elanmoc/custom.py   | 6 ++++++
+ tests/goodixmoc/custom.py | 6 ++++++
+ tests/virtual-device.py   | 3 +++
+ tests/virtual-image.py    | 3 +++
+ 5 files changed, 25 insertions(+), 2 deletions(-)
+ mode change 100644 => 100755 tests/goodixmoc/custom.py
+
+diff --git a/tests/capture.py b/tests/capture.py
+index c25afbf..d6573a8 100755
+--- a/tests/capture.py
++++ b/tests/capture.py
+@@ -1,10 +1,15 @@
+ #!/usr/bin/python3
+ 
++import cairo
++import sys
++import traceback
+ import gi
++
+ gi.require_version('FPrint', '2.0')
+ from gi.repository import FPrint, GLib
+-import cairo
+-import sys
++
++# Exit with error on any exception, included those happening in async callbacks
++sys.excepthook = lambda *args: (traceback.print_exception(*args), sys.exit(1))
+ 
+ if len(sys.argv) != 2:
+     print("Please specify exactly one argument, the output location for the capture image")
+diff --git a/tests/elanmoc/custom.py b/tests/elanmoc/custom.py
+index c64414c..1a3b8b3 100755
+--- a/tests/elanmoc/custom.py
++++ b/tests/elanmoc/custom.py
+@@ -1,9 +1,15 @@
+ #!/usr/bin/python3
+ 
++import traceback
++import sys
+ import gi
++
+ gi.require_version('FPrint', '2.0')
+ from gi.repository import FPrint, GLib
+ 
++# Exit with error on any exception, included those happening in async callbacks
++sys.excepthook = lambda *args: (traceback.print_exception(*args), sys.exit(1))
++
+ ctx = GLib.main_context_default()
+ 
+ c = FPrint.Context()
+diff --git a/tests/goodixmoc/custom.py b/tests/goodixmoc/custom.py
+old mode 100644
+new mode 100755
+index 73f90a5..aee4391
+--- a/tests/goodixmoc/custom.py
++++ b/tests/goodixmoc/custom.py
+@@ -1,9 +1,15 @@
+ #!/usr/bin/python3
+ 
++import traceback
++import sys
+ import gi
++
+ gi.require_version('FPrint', '2.0')
+ from gi.repository import FPrint, GLib
+ 
++# Exit with error on any exception, included those happening in async callbacks
++sys.excepthook = lambda *args: (traceback.print_exception(*args), sys.exit(1))
++
+ ctx = GLib.main_context_default()
+ 
+ c = FPrint.Context()
+diff --git a/tests/virtual-device.py b/tests/virtual-device.py
+index e15b432..beec97f 100644
+--- a/tests/virtual-device.py
++++ b/tests/virtual-device.py
+@@ -22,6 +22,9 @@ except Exception as e:
+ 
+ FPrint = None
+ 
++# Exit with error on any exception, included those happening in async callbacks
++sys.excepthook = lambda *args: (traceback.print_exception(*args), sys.exit(1))
++
+ ctx = GLib.main_context_default()
+ 
+ 
+diff --git a/tests/virtual-image.py b/tests/virtual-image.py
+index e4a464e..5563003 100755
+--- a/tests/virtual-image.py
++++ b/tests/virtual-image.py
+@@ -21,6 +21,9 @@ except Exception as e:
+ 
+ FPrint = None
+ 
++# Exit with error on any exception, included those happening in async callbacks
++sys.excepthook = lambda *args: (traceback.print_exception(*args), sys.exit(1))
++
+ def load_image(img):
+     png = cairo.ImageSurface.create_from_png(img)
+ 

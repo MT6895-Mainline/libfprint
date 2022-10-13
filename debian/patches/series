@@ -17,4 +17,8 @@ synaptics-Add-new-PID-0x0104.patch
 goodixmoc-add-PID-0x634C.patch
 goodixmoc-add-PID-6094.patch
 upek-add-PID-0x2017.patch
+Update-autosuspend.hwdb.patch
 goodixmoc-add-PID-0x6014.patch
+goodix-Lower-poor-capture-warnings-to-debug-message.patch
+synaptics-goodix-Properly-check-for-finger-status-during-.patch
+tests-Ensure-python-tests-exit-with-error-on-every-except.patch

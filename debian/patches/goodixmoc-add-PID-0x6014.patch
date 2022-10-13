@@ -9,7 +9,7 @@ Signed-off-by: Lv Ying <lvying.system.thoughts@gmail.com>
  2 files changed, 3 insertions(+)
 
 diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
-index d8127c3..9a63c43 100644
+index ca2435a..5291831 100644
 --- a/data/autosuspend.hwdb
 +++ b/data/autosuspend.hwdb
 @@ -159,6 +159,7 @@ usb:v1C7Ap0603*
