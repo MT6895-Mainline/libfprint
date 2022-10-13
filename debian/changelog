@@ -1,13 +1,14 @@
 libfprint (1:1.94.5+tod1-0ubuntu1) UNRELEASED; urgency=medium
 
-  * New upstream release:
+  * New upstream release (LP: #1992855):
     - Supports new FPC MOC device
     - Avoid defining duplicated symbols in tod and libfprint (LP: #1992841)
   * debian/libfprint-2-2.postinst: Devices triggers updated
   * debian/patches: Drop all (applied upstream)
   * debian/libfprint-2-tod1.symbols: Add new symbols for shared drivers
+  * debian/source: Remove include-binaries file, we've none now
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 13 Oct 2022 20:48:17 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 14 Oct 2022 00:18:27 +0200
 
 libfprint (1:1.94.3+tod1-0ubuntu3) kinetic; urgency=medium
 
