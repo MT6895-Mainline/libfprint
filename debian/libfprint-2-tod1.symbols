@@ -145,11 +145,13 @@ libfprint-2-tod.so.1 libfprint-2-tod1 #MINVER#
  fpi_device_remove@LIBFPRINT_TOD_1.0.0 1:1.90.5+tod1
  fpi_device_report_finger_status@LIBFPRINT_TOD_1.0.0 1:1.90.5+tod1
  fpi_device_report_finger_status_changes@LIBFPRINT_TOD_1.0.0 1:1.90.5+tod1
+ fpi_device_resume@LIBFPRINT_TOD_1_1.94 1:1.94.5+tod1
  fpi_device_resume_complete@LIBFPRINT_TOD_1_1.94 1:1.94.1+tod1
  fpi_device_retry_new@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_retry_new_msg@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_set_nr_enroll_stages@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
  fpi_device_set_scan_type@LIBFPRINT_TOD_1.0.0 1:1.90.1+tod1
+ fpi_device_suspend@LIBFPRINT_TOD_1_1.94 1:1.94.5+tod1
  fpi_device_suspend_complete@LIBFPRINT_TOD_1_1.94 1:1.94.1+tod1
  fpi_device_udev_subtype_flags_get_type@LIBFPRINT_TOD_1.0.0 1:1.94.1+tod1
  fpi_device_update_features@LIBFPRINT_TOD_1_1.92 1:1.94.1+tod1
