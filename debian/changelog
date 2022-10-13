@@ -1,3 +1,12 @@
+libfprint (1:1.94.3+tod1-0ubuntu3) UNRELEASED; urgency=medium
+
+  * elanmoc: Add support for more supported PIDs.
+    And include more tests for specific cases. (LP: #1989314)
+  * debian/patches: Add support for more device PIDs supported upstream
+  * debian/patches: Improve testing for various drivers
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 13 Oct 2022 13:54:42 +0200
+
 libfprint (1:1.94.3+tod1-0ubuntu2) kinetic; urgency=medium
 
   * debian/patches: Ensure that identify works with old goodix driver
