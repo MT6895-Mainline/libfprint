@@ -1,4 +1,4 @@
-libfprint (1:1.94.5+tod1-0ubuntu1) UNRELEASED; urgency=medium
+libfprint (1:1.94.5+tod1-0ubuntu1) kinetic; urgency=medium
 
   * New upstream release (LP: #1992855):
     - Supports new FPC MOC device
