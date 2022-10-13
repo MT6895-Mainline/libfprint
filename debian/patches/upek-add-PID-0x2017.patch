@@ -1,0 +1,20 @@
+From: mbv06 <mbv06.dev@gmail.com>
+Date: Mon, 26 Sep 2022 10:38:17 +0000
+Subject: upek: add PID 0x2017
+
+---
+ libfprint/drivers/upektc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libfprint/drivers/upektc.c b/libfprint/drivers/upektc.c
+index 115e6b6..3f7b6a6 100644
+--- a/libfprint/drivers/upektc.c
++++ b/libfprint/drivers/upektc.c
+@@ -431,6 +431,7 @@ dev_deinit (FpImageDevice *dev)
+ 
+ static const FpIdEntry id_table[] = {
+   { .vid = 0x0483,  .pid = 0x2015, .driver_data = UPEKTC_2015 },
++  { .vid = 0x0483,  .pid = 0x2017, .driver_data = UPEKTC_2015 },
+   { .vid = 0x147e,  .pid = 0x3001, .driver_data = UPEKTC_3001 },
+   { .vid = 0,  .pid = 0,  .driver_data = 0 },
+ };

@@ -1,0 +1,33 @@
+From: Aris Lin <Aris.Lin@synaptics.com>
+Date: Mon, 23 May 2022 21:06:23 +0800
+Subject: synaptics: Add new PID 0x015F
+
+---
+ data/autosuspend.hwdb                   | 1 +
+ libfprint/drivers/synaptics/synaptics.c | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index 49fcacf..9e462e7 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -191,6 +191,7 @@ usb:v06CBp0123*
+ usb:v06CBp0126*
+ usb:v06CBp0129*
+ usb:v06CBp0168*
++usb:v06CBp015F*
+  ID_AUTOSUSPEND=1
+  ID_PERSIST=0
+ 
+diff --git a/libfprint/drivers/synaptics/synaptics.c b/libfprint/drivers/synaptics/synaptics.c
+index b89989b..effdaac 100644
+--- a/libfprint/drivers/synaptics/synaptics.c
++++ b/libfprint/drivers/synaptics/synaptics.c
+@@ -43,6 +43,7 @@ static const FpIdEntry id_table[] = {
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0126,  },
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0129,  },
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0168,  },
++  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x015F,  },
+   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */
+ };
+ 

@@ -1,0 +1,54 @@
+From: Josh Chen <josh.chen@emc.com.tw>
+Date: Wed, 13 Apr 2022 14:48:29 +0800
+Subject: elan: add PID 0x0c4b
+
+---
+ data/autosuspend.hwdb             | 2 +-
+ libfprint/drivers/elan.h          | 1 +
+ libfprint/fprint-list-udev-hwdb.c | 1 -
+ 3 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index c305c44..49fcacf 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -133,6 +133,7 @@ usb:v04F3p0C32*
+ usb:v04F3p0C33*
+ usb:v04F3p0C3D*
+ usb:v04F3p0C42*
++usb:v04F3p0C4B*
+ usb:v04F3p0C4D*
+ usb:v04F3p0C4F*
+ usb:v04F3p0C63*
+@@ -259,7 +260,6 @@ usb:v138Ap0091*
+ # Known unsupported devices
+ usb:v04F3p036B*
+ usb:v04F3p0C00*
+-usb:v04F3p0C4B*
+ usb:v04F3p0C4C*
+ usb:v04F3p0C57*
+ usb:v04F3p0C5E*
+diff --git a/libfprint/drivers/elan.h b/libfprint/drivers/elan.h
+index 33f3aef..7d08994 100644
+--- a/libfprint/drivers/elan.h
++++ b/libfprint/drivers/elan.h
+@@ -215,6 +215,7 @@ static const FpIdEntry elan_id_table[] = {
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c33, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c3d, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c42, .driver_data = ELAN_0C42},
++  {.vid = ELAN_VEND_ID,  .pid = 0x0c4b, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c4d, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c4f, .driver_data = ELAN_ALL_DEV},
+   {.vid = ELAN_VEND_ID,  .pid = 0x0c63, .driver_data = ELAN_ALL_DEV},
+diff --git a/libfprint/fprint-list-udev-hwdb.c b/libfprint/fprint-list-udev-hwdb.c
+index ad9cdd0..5244cc6 100644
+--- a/libfprint/fprint-list-udev-hwdb.c
++++ b/libfprint/fprint-list-udev-hwdb.c
+@@ -31,7 +31,6 @@ static const FpIdEntry whitelist_id_table[] = {
+    */
+   { .vid = 0x04f3, .pid = 0x036b },
+   { .vid = 0x04f3, .pid = 0x0c00 },
+-  { .vid = 0x04f3, .pid = 0x0c4b },
+   { .vid = 0x04f3, .pid = 0x0c4c },
+   { .vid = 0x04f3, .pid = 0x0c57 },
+   { .vid = 0x04f3, .pid = 0x0c5e },
