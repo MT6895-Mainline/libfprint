@@ -291,11 +291,10 @@ fp_context_finalize (GObject *object)
   FpContext *self = (FpContext *) object;
   FpContextPrivate *priv = fp_context_get_instance_private (self);
 
-  g_clear_pointer (&priv->devices, g_ptr_array_unref);
-
   g_cancellable_cancel (priv->cancellable);
   g_clear_object (&priv->cancellable);
   g_clear_pointer (&priv->drivers, g_array_unref);
+  g_clear_pointer (&priv->devices, g_ptr_array_unref);
 
   g_slist_free_full (g_steal_pointer (&priv->sources), (GDestroyNotify) g_source_destroy);
 
@@ -360,6 +359,8 @@ fp_context_init (FpContext *self)
   g_autoptr(GError) error = NULL;
   FpContextPrivate *priv = fp_context_get_instance_private (self);
   guint i;
+
+  g_debug ("Initializing FpContext (libfprint version " LIBFPRINT_VERSION ")");
 
   priv->drivers = fpi_get_driver_types ();
 
@@ -426,6 +427,7 @@ void
 fp_context_enumerate (FpContext *context)
 {
   FpContextPrivate *priv = fp_context_get_instance_private (context);
+  gboolean dispatched;
   gint i;
 
   g_return_if_fail (FP_IS_CONTEXT (context));
@@ -564,8 +566,19 @@ fp_context_enumerate (FpContext *context)
   }
 #endif
 
-  while (priv->pending_devices)
-    g_main_context_iteration (NULL, TRUE);
+  /* Iterate until 1. we have no pending devices, and 2. the mainloop is idle
+   * This takes care of processing hotplug events that happened during
+   * enumeration.
+   * This is important due to USB `persist` being turned off. At resume time,
+   * devices will disappear and immediately re-appear. In this situation,
+   * enumerate could first see the old state with a removed device resulting
+   * in it to not be discovered.
+   * As a hotplug event is seemingly emitted by the kernel immediately, we can
+   * simply make sure to process all events before returning from enumerate.
+   */
+  dispatched = TRUE;
+  while (priv->pending_devices || dispatched)
+    dispatched = g_main_context_iteration (NULL, !!priv->pending_devices);
 }
 
 /**
