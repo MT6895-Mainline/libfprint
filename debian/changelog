@@ -1,3 +1,9 @@
+libfprint (1:1.94.5+tod1-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 13 Oct 2022 20:52:27 +0200
+
 libfprint (1:1.94.3+tod1-0ubuntu3) kinetic; urgency=medium
 
   * elanmoc: Add support for more supported PIDs.
