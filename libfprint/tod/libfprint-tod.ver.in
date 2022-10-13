@@ -240,7 +240,9 @@ LIBFPRINT_TOD_@tod_soversion@_1.94 {
 global:
     fpi_device_critical_enter;
     fpi_device_critical_leave;
+    fpi_device_resume;
     fpi_device_resume_complete;
+    fpi_device_suspend;
     fpi_device_suspend_complete;
     fpi_ssm_silence_debug;
 

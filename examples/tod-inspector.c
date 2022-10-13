@@ -113,9 +113,9 @@ main (void)
   g_autoptr(GArray) shared_drivers = NULL;
   guint i;
 
-  fpi_tod_shared_drivers_register ();
+  tod_shared_drivers_register ();
 
-  shared_drivers = fpi_tod_shared_drivers_get ();
+  shared_drivers = tod_shared_drivers_get ();
   g_print ("Found %u drivers\n", shared_drivers->len);
 
   for (i = 0; i < shared_drivers->len; i++)
@@ -157,5 +157,5 @@ main (void)
         g_print ("------------\n");
     }
 
-  fpi_tod_shared_drivers_unregister ();
+  tod_shared_drivers_unregister ();
 }

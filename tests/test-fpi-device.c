@@ -143,6 +143,10 @@ tod_check_device_version (FpDevice   *device_class,
                             tod_subversion);
 }
 
+/* gcc 12.0.1 is complaining about dangling pointers in the auto_close* functions */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdangling-pointer"
+
 /* Utility functions */
 
 typedef FpDevice FpAutoCloseDevice;
@@ -1260,6 +1264,7 @@ test_driver_enroll_update_nbis_wrong_device (void)
   fake_dev = FPI_DEVICE_FAKE (device);
 
   template_print = make_fake_nbis_print (device);
+  g_clear_pointer (&template_print->device_id, g_free);
   template_print->device_id = g_strdup ("wrong_device");
   fake_dev->ret_print = template_print;
 
@@ -1286,6 +1291,7 @@ test_driver_enroll_update_nbis_wrong_driver (void)
   fake_dev = FPI_DEVICE_FAKE (device);
 
   template_print = make_fake_nbis_print (device);
+  g_clear_pointer (&template_print->driver, g_free);
   template_print->driver = g_strdup ("wrong_driver");
   fake_dev->ret_print = template_print;
 
@@ -2563,6 +2569,11 @@ test_driver_identify_warmup_cooldown (void)
     continue;
   g_assert_true (identify_data->called);
   g_assert_error (identify_data->error, FP_DEVICE_ERROR, FP_DEVICE_ERROR_TOO_HOT);
+
+  /* Try to identify again, and ensure that we fail early */
+  fp_device_identify_sync (device, prints, NULL, NULL, NULL, NULL, NULL, &error);
+  g_assert_error (error, FP_DEVICE_ERROR, FP_DEVICE_ERROR_TOO_HOT);
+  g_clear_error (&error);
 
   /* Now, wait for it to cool down again;
    * WARM should be reached after about 2s

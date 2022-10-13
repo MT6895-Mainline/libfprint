@@ -661,7 +661,7 @@ fp_enroll_capture_cb (FpiDeviceGoodixMoc  *self,
   /* */
   if (resp->result >= GX_FAILED)
     {
-      fp_warn ("Capture sample failed, result: 0x%x", resp->result);
+      fp_info ("Capture sample failed, result: 0x%x", resp->result);
       fpi_device_enroll_progress (FP_DEVICE (self),
                                   self->enroll_stage,
                                   NULL,
@@ -675,7 +675,7 @@ fp_enroll_capture_cb (FpiDeviceGoodixMoc  *self,
   if ((resp->capture_data_resp.img_quality < self->sensorcfg->config[4]) ||
       (resp->capture_data_resp.img_coverage < self->sensorcfg->config[5]))
     {
-      fp_warn ("Capture sample poor quality(%d): %d or coverage(%d): %d",
+      fp_info ("Capture sample poor quality(%d): %d or coverage(%d): %d",
                self->sensorcfg->config[4],
                resp->capture_data_resp.img_quality,
                self->sensorcfg->config[5],
@@ -1041,6 +1041,47 @@ fp_init_config_cb (FpiDeviceGoodixMoc  *self,
   fpi_ssm_next_state (self->task_ssm);
 }
 
+static void
+fp_init_cb_reset_or_complete (FpiDeviceGoodixMoc  *self,
+                              gxfp_cmd_response_t *resp,
+                              GError              *error)
+{
+  if (error)
+    {
+      fp_warn ("Template storage appears to have been corrupted! Error was: %s", error->message);
+      fp_warn ("A known reason for this to happen is a firmware bug triggered by another storage area being initialized.");
+      fpi_ssm_jump_to_state (self->task_ssm, FP_INIT_RESET_DEVICE);
+    }
+  else
+    {
+      fpi_ssm_mark_completed (self->task_ssm);
+    }
+}
+
+static void
+fp_init_reset_device_cb (FpiDeviceGoodixMoc  *self,
+                         gxfp_cmd_response_t *resp,
+                         GError              *error)
+{
+  if (error)
+    {
+      fp_warn ("Reset failed: %s", error->message);
+      fpi_ssm_mark_failed (self->task_ssm, error);
+      return;
+    }
+  if ((resp->result >= GX_FAILED) && (resp->result != GX_ERROR_FINGER_ID_NOEXIST))
+    {
+      fp_warn ("Reset failed, device reported: 0x%x", resp->result);
+      fpi_ssm_mark_failed (self->task_ssm,
+                           fpi_device_error_new_msg (FP_DEVICE_ERROR_GENERAL,
+                                                     "Failed clear storage, result: 0x%x",
+                                                     resp->result));
+      return;
+    }
+
+  fp_warn ("Reset completed");
+  fpi_ssm_mark_completed (self->task_ssm);
+}
 
 static void
 fp_init_sm_run_state (FpiSsm *ssm, FpDevice *device)
@@ -1064,6 +1105,30 @@ fp_init_sm_run_state (FpiSsm *ssm, FpDevice *device)
                          (guint8 *) self->sensorcfg,
                          sizeof (gxfp_sensor_cfg_t),
                          fp_init_config_cb);
+      break;
+
+    case FP_INIT_TEMPLATE_LIST:
+      /* List prints to check whether the template DB was corrupted.
+       * As of 2022-06-13 there is a known firmware issue that can cause the
+       * stored templates for Linux to be corrupted when the Windows storage
+       * area is initialized.
+       * In that case, we'll get a protocol failure trying to retrieve the
+       * list of prints.
+       */
+      goodix_sensor_cmd (self, MOC_CMD0_GETFINGERLIST, MOC_CMD1_DEFAULT,
+                         FALSE,
+                         (const guint8 *) &dummy,
+                         1,
+                         fp_init_cb_reset_or_complete);
+      break;
+
+    case FP_INIT_RESET_DEVICE:
+      fp_warn ("Resetting device storage, you will need to enroll all prints again!");
+      goodix_sensor_cmd (self, MOC_CMD0_DELETETEMPLATE, MOC_CMD1_DELETE_ALL,
+                         FALSE,
+                         NULL,
+                         0,
+                         fp_init_reset_device_cb);
       break;
     }
 
@@ -1294,12 +1359,18 @@ gx_fp_probe (FpDevice *device)
     {
     case 0x6496:
     case 0x60A2:
+    case 0x6014:
+    case 0x6094:
     case 0x609C:
+    case 0x631C:
+    case 0x634C:
+    case 0x6384:
     case 0x639C:
     case 0x63AC:
     case 0x63BC:
     case 0x63CC:
     case 0x6A94:
+    case 0x659A:
       self->max_enroll_stage = 12;
       break;
 
@@ -1530,8 +1601,13 @@ fpi_device_goodixmoc_init (FpiDeviceGoodixMoc *self)
 
 static const FpIdEntry id_table[] = {
   { .vid = 0x27c6,  .pid = 0x5840,  },
+  { .vid = 0x27c6,  .pid = 0x6014,  },
+  { .vid = 0x27c6,  .pid = 0x6094,  },
   { .vid = 0x27c6,  .pid = 0x609C,  },
   { .vid = 0x27c6,  .pid = 0x60A2,  },
+  { .vid = 0x27c6,  .pid = 0x631C,  },
+  { .vid = 0x27c6,  .pid = 0x634C,  },
+  { .vid = 0x27c6,  .pid = 0x6384,  },
   { .vid = 0x27c6,  .pid = 0x639C,  },
   { .vid = 0x27c6,  .pid = 0x63AC,  },
   { .vid = 0x27c6,  .pid = 0x63BC,  },
@@ -1541,6 +1617,7 @@ static const FpIdEntry id_table[] = {
   { .vid = 0x27c6,  .pid = 0x658C,  },
   { .vid = 0x27c6,  .pid = 0x6592,  },
   { .vid = 0x27c6,  .pid = 0x6594,  },
+  { .vid = 0x27c6,  .pid = 0x659A,  },
   { .vid = 0x27c6,  .pid = 0x659C,  },
   { .vid = 0x27c6,  .pid = 0x6A94,  },
   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */

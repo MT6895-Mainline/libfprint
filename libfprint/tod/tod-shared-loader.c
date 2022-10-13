@@ -22,6 +22,7 @@
 #include <gmodule.h>
 
 #include "tod-shared-loader.h"
+#include "tod-goodix-wrapper.h"
 #include "fpi-device.h"
 #include "fpi-log.h"
 #include "tod-config.h"
@@ -48,7 +49,7 @@ get_tod_drivers_dir (void)
 }
 
 void
-fpi_tod_shared_drivers_register (void)
+tod_shared_drivers_register (void)
 {
   const char *dirname;
   const char *basename;
@@ -131,6 +132,9 @@ fpi_tod_shared_drivers_register (void)
         {
           g_debug ("Initializing features for driver %s", cls->id);
           fpi_device_class_auto_initialize_features (cls);
+
+          if (g_strcmp0 (cls->id, "goodix-tod") == 0)
+            goodix_tod_wrapper_init (cls);
         }
 
       shared_modules = g_list_prepend (shared_modules,
@@ -139,7 +143,7 @@ fpi_tod_shared_drivers_register (void)
 }
 
 void
-fpi_tod_shared_drivers_unregister (void)
+tod_shared_drivers_unregister (void)
 {
   g_clear_pointer (&shared_drivers, g_array_unref);
 
@@ -151,7 +155,7 @@ fpi_tod_shared_drivers_unregister (void)
 }
 
 GArray *
-fpi_tod_shared_drivers_get (void)
+tod_shared_drivers_get (void)
 {
   return g_array_ref (shared_drivers);
 }
