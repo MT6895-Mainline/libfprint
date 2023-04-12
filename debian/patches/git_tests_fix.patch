@@ -1,0 +1,29 @@
+From 9fd2ccff2916ac2131973b84736c3f374f7c05d3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marco=20Trevisan=20=28Trevi=C3=B1o=29?= <mail@3v1n0.net>
+Date: Wed, 15 Mar 2023 16:03:58 +0100
+Subject: [PATCH] virtual-device-listener: Always return task even if we got
+ zero bytes
+
+See: https://gitlab.gnome.org/GNOME/glib/-/issues/1346
+---
+ libfprint/drivers/virtual-device-listener.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/libfprint/drivers/virtual-device-listener.c b/libfprint/drivers/virtual-device-listener.c
+index cd2fe2e09..16987a1b2 100644
+--- a/libfprint/drivers/virtual-device-listener.c
++++ b/libfprint/drivers/virtual-device-listener.c
+@@ -273,7 +273,8 @@ on_stream_read_cb (GObject      *source_object,
+         }
+       else
+         {
+-          // g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_INVALID_DATA, "Got empty data");
++          g_task_return_new_error (task, G_IO_ERROR, G_IO_ERROR_INVALID_DATA,
++                                   "Got empty data");
+           return;
+         }
+     }
+-- 
+GitLab
+
+
