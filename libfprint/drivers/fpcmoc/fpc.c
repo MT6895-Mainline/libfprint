@@ -132,7 +132,11 @@ fpc_cmd_receive_cb (FpiUsbTransfer *transfer,
     }
 
   ssm_state = fpi_ssm_get_cur_state (transfer->ssm);
-  fp_dbg ("%s current ssm state: %d", G_STRFUNC, ssm_state);
+  fp_dbg ("%s current ssm request: %d state: %d", G_STRFUNC, data->request, ssm_state);
+
+  /* clean cmd_ssm except capture command for suspend/resume case */
+  if (ssm_state != FP_CMD_SEND || data->request != FPC_CMD_ARM)
+    self->cmd_ssm = NULL;
 
   if (data->cmdtype == FPC_CMDTYPE_TO_DEVICE)
     {
@@ -358,6 +362,7 @@ fpc_sensor_cmd (FpiDeviceFpcMoc *self,
       g_clear_object (&self->interrupt_cancellable);
     }
 
+  g_assert (self->cmd_ssm == NULL);
   self->cmd_ssm = fpi_ssm_new (FP_DEVICE (self),
                                fpc_cmd_run_state,
                                FP_CMD_NUM_STATES);
@@ -1149,12 +1154,9 @@ fpc_enroll_ssm_done (FpiSsm *ssm, FpDevice *dev, GError *error)
 
   fp_info ("Enrollment complete!");
 
-  if (fpi_ssm_get_error (ssm))
-    error = fpi_ssm_get_error (ssm);
-
   if (error)
     {
-      fpi_device_enroll_complete (dev, NULL, error);
+      fpi_device_enroll_complete (dev, NULL, g_steal_pointer (&error));
       self->task_ssm = NULL;
       return;
     }
@@ -1336,9 +1338,6 @@ fpc_verify_ssm_done (FpiSsm *ssm, FpDevice *dev, GError *error)
 
   fp_info ("Verify_identify complete!");
 
-  if (fpi_ssm_get_error (ssm))
-    error = fpi_ssm_get_error (ssm);
-
   if (error && error->domain == FP_DEVICE_RETRY)
     {
       if (fpi_device_get_current_action (dev) == FPI_DEVICE_ACTION_VERIFY)
@@ -1348,9 +1347,9 @@ fpc_verify_ssm_done (FpiSsm *ssm, FpDevice *dev, GError *error)
     }
 
   if (fpi_device_get_current_action (dev) == FPI_DEVICE_ACTION_VERIFY)
-    fpi_device_verify_complete (dev, error);
+    fpi_device_verify_complete (dev, g_steal_pointer (&error));
   else
-    fpi_device_identify_complete (dev, error);
+    fpi_device_identify_complete (dev, g_steal_pointer (&error));
 
   self->task_ssm = NULL;
 }
@@ -1448,10 +1447,7 @@ fpc_clear_ssm_done (FpiSsm *ssm, FpDevice *dev, GError *error)
 
   fp_info ("Clear Storage complete!");
 
-  if (fpi_ssm_get_error (ssm))
-    error = fpi_ssm_get_error (ssm);
-
-  fpi_device_clear_storage_complete (dev, error);
+  fpi_device_clear_storage_complete (dev, g_steal_pointer (&error));
   self->task_ssm = NULL;
 }
 
@@ -1555,10 +1551,7 @@ fpc_init_ssm_done (FpiSsm *ssm, FpDevice *dev, GError *error)
 {
   FpiDeviceFpcMoc *self = FPI_DEVICE_FPCMOC (dev);
 
-  if (fpi_ssm_get_error (ssm))
-    error = fpi_ssm_get_error (ssm);
-
-  fpi_device_open_complete (dev, error);
+  fpi_device_open_complete (dev, g_steal_pointer (&error));
   self->task_ssm = NULL;
 }
 

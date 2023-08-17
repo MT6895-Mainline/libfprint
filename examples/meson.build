@@ -22,6 +22,11 @@ executable('cpp-test',
     dependencies: libfprint_dep,
 )
 
+if installed_tests
+    install_subdir('prints',
+        install_dir: installed_tests_testdir)
+endif
+
 if get_option('tod')
     executable('tod-inspector',
         sources: 'tod-inspector.c',
