@@ -1,0 +1,6 @@
+Test-Command: gnome-desktop-testing-runner libfprint-2
+Features: test-name=installed-tests
+Classes: desktop
+Depends: gnome-desktop-testing,
+         libfprint-2-tests
+Restrictions: allow-stderr
