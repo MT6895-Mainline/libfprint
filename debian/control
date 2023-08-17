@@ -116,3 +116,30 @@ Description: async fingerprint library of fprint project, gir bindings
  .
  This package can be used by other packages using the GIRepository format to
  generate dynamic bindings.
+
+Package: libfprint-2-tests
+Architecture: any
+Depends: gir1.2-fprint-2.0 (= ${binary:Version}),
+         libfprint-2-2 (= ${binary:Version}),
+         python3,
+         python3-cairo,
+         python3-gi,
+         umockdev,
+         ${misc:Depends}, ${shlibs:Depends}
+Description: Tests for async fingerprint library of fprint project
+ The fprint project aims to support for consumer fingerprint reader devices.
+ .
+ Previously, Linux support for such devices has been scattered amongst different
+ projects (many incomplete) and inconsistent in that application developers
+ would have to implement support for each type of fingerprint reader separately.
+ The idea is to change that by providing a central system to support all the
+ fingerprint readers as it's possible to get hands on.
+ .
+ libfprint is the centre of efforts, this component does the dirty job of
+ talking to fingerprint reading devices, and processing fingerprint data.
+ .
+ This library depends on the new libusb, which performs asynchronous callbacks,
+ allowing fprint to perform non-blocking device tasks.
+ .
+ This package contains test programs, designed to be run as part of a
+ regression testsuite.
