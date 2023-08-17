@@ -2,8 +2,13 @@ libfprint (1:1.94.6+tod1-0ubuntu1) UNRELEASED; urgency=medium
 
   * New upstream release
   * debian/libfprint-2-2.postinst: Devices triggers updated
+  * debian/patches: Drop, applied upstream
+  * debian: Add libfprint-2-tests package
+  * debian/tests: Run installed tests as regression tests
+  * debian/patches: Install current tod driver for installed tests
+  * debian/patches: Use assets from correct paths
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 17 Aug 2023 19:53:13 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 17 Aug 2023 21:52:23 +0200
 
 libfprint (1:1.94.5+tod1-0ubuntu2) lunar; urgency=medium
 
