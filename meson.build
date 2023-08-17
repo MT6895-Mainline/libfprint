@@ -1,17 +1,22 @@
 project('libfprint', [ 'c', 'cpp' ],
-    version: '1.94.5+tod1',
+    version: '1.94.6+tod1',
     license: 'LGPLv2.1+',
     default_options: [
         'buildtype=debugoptimized',
         'warning_level=1',
         'c_std=gnu99',
     ],
-    meson_version: '>= 0.49.0')
+    meson_version: '>= 0.56.0')
 
 gnome = import('gnome')
 
 libfprint_conf = configuration_data()
 libfprint_conf.set_quoted('LIBFPRINT_VERSION', meson.project_version())
+
+prefix = get_option('prefix')
+libdir = prefix / get_option('libdir')
+libexecdir = prefix / get_option('libexecdir')
+datadir = prefix / get_option('datadir')
 
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
@@ -286,8 +291,6 @@ else
 endif
 
 if get_option('gtk-examples')
-    gnome = import('gnome')
-
     gtk_dep = dependency('gtk+-3.0', required: false)
     if not gtk_dep.found()
         error('GTK+ 3.x is required for GTK+ examples')
@@ -300,9 +303,7 @@ subdir('libfprint')
 libfprint_conf.set10('HAVE_LIBFPRINT_TOD', get_option('tod'))
 configure_file(output: 'config.h', configuration: libfprint_conf)
 
-subdir('examples')
 if get_option('doc')
-    gnome = import('gnome')
     subdir('doc')
 endif
 if get_option('gtk-examples')
@@ -311,6 +312,8 @@ endif
 
 subdir('data')
 subdir('tests')
+
+subdir('examples')
 
 pkgconfig = import('pkgconfig')
 pkgconfig.generate(
@@ -322,3 +325,5 @@ pkgconfig.generate(
     subdirs: versioned_libname,
     filebase: versioned_libname,
 )
+
+summary({'Drivers': drivers, }, section: 'Drivers')

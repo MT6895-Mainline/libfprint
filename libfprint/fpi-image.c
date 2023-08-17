@@ -26,7 +26,7 @@
 #include <nbis.h>
 #include <config.h>
 
-#if HAVE_PIXMAN
+#ifdef HAVE_PIXMAN
 #include <pixman.h>
 #endif
 
@@ -113,7 +113,7 @@ fpi_image_resize (FpImage *orig_img,
                   guint    w_factor,
                   guint    h_factor)
 {
-#if HAVE_PIXMAN
+#ifdef HAVE_PIXMAN
   int new_width = orig_img->width * w_factor;
   int new_height = orig_img->height * h_factor;
   pixman_image_t *orig, *resized;
@@ -149,6 +149,6 @@ fpi_image_resize (FpImage *orig_img,
 #else
   fp_err ("Libfprint compiled without pixman support, impossible to resize");
 
-  return NULL;
+  return g_object_ref (orig_img);
 #endif
 }
