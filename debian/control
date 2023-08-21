@@ -175,6 +175,7 @@ Package: libfprint-2-tests
 Architecture: any
 Depends: gir1.2-fprint-2.0 (= ${binary:Version}),
          libfprint-2-2 (= ${binary:Version}),
+         python3,
          python3-cairo,
          python3-gi,
          umockdev,
