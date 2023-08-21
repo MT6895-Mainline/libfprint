@@ -1,0 +1,68 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Mon, 21 Aug 2023 12:42:02 +0200
+Subject: tests: Remove executable bits from installed libraries
+
+(cherry picked from commit 54f02c77991506bd28d375a19ccdac49a12ba9ae)
+---
+ .../libdevice-fake-tod-ssm-test-v1+1.90.1-x86_64.so         | Bin
+ .../libdevice-fake-tod-test-driver-v1+1.90.1-x86_64.so      | Bin
+ .../libdevice-fake-tod-ssm-test-v1+1.90.2-x86_64.so         | Bin
+ .../libdevice-fake-tod-test-driver-v1+1.90.2-x86_64.so      | Bin
+ .../libdevice-fake-tod-ssm-test-v1+1.90.3-x86_64.so         | Bin
+ .../libdevice-fake-tod-test-driver-v1+1.90.3-x86_64.so      | Bin
+ .../libdevice-fake-tod-ssm-test-v1+1.90.5-x86_64.so         | Bin
+ .../libdevice-fake-tod-test-driver-v1+1.90.5-x86_64.so      | Bin
+ .../libdevice-fake-tod-ssm-test-v1+1.94.0-x86_64.so         | Bin
+ .../libdevice-fake-tod-test-driver-v1+1.94.0-x86_64.so      | Bin
+ .../libdevice-fake-tod-ssm-test-v1+1.94.3-x86_64.so         | Bin
+ .../libdevice-fake-tod-test-driver-v1+1.94.3-x86_64.so      | Bin
+ 12 files changed, 0 insertions(+), 0 deletions(-)
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.90.1/libdevice-fake-tod-ssm-test-v1+1.90.1-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.90.1/libdevice-fake-tod-test-driver-v1+1.90.1-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.90.2/libdevice-fake-tod-ssm-test-v1+1.90.2-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.90.2/libdevice-fake-tod-test-driver-v1+1.90.2-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.90.3/libdevice-fake-tod-ssm-test-v1+1.90.3-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.90.3/libdevice-fake-tod-test-driver-v1+1.90.3-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.90.5/libdevice-fake-tod-ssm-test-v1+1.90.5-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.90.5/libdevice-fake-tod-test-driver-v1+1.90.5-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.94.0/libdevice-fake-tod-ssm-test-v1+1.94.0-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.94.0/libdevice-fake-tod-test-driver-v1+1.94.0-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.94.3/libdevice-fake-tod-ssm-test-v1+1.94.3-x86_64.so
+ mode change 100755 => 100644 tests/tod-drivers/tod-x86_64-v1+1.94.3/libdevice-fake-tod-test-driver-v1+1.94.3-x86_64.so
+
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.90.1/libdevice-fake-tod-ssm-test-v1+1.90.1-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.90.1/libdevice-fake-tod-ssm-test-v1+1.90.1-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.90.1/libdevice-fake-tod-test-driver-v1+1.90.1-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.90.1/libdevice-fake-tod-test-driver-v1+1.90.1-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.90.2/libdevice-fake-tod-ssm-test-v1+1.90.2-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.90.2/libdevice-fake-tod-ssm-test-v1+1.90.2-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.90.2/libdevice-fake-tod-test-driver-v1+1.90.2-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.90.2/libdevice-fake-tod-test-driver-v1+1.90.2-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.90.3/libdevice-fake-tod-ssm-test-v1+1.90.3-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.90.3/libdevice-fake-tod-ssm-test-v1+1.90.3-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.90.3/libdevice-fake-tod-test-driver-v1+1.90.3-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.90.3/libdevice-fake-tod-test-driver-v1+1.90.3-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.90.5/libdevice-fake-tod-ssm-test-v1+1.90.5-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.90.5/libdevice-fake-tod-ssm-test-v1+1.90.5-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.90.5/libdevice-fake-tod-test-driver-v1+1.90.5-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.90.5/libdevice-fake-tod-test-driver-v1+1.90.5-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.94.0/libdevice-fake-tod-ssm-test-v1+1.94.0-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.94.0/libdevice-fake-tod-ssm-test-v1+1.94.0-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.94.0/libdevice-fake-tod-test-driver-v1+1.94.0-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.94.0/libdevice-fake-tod-test-driver-v1+1.94.0-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.94.3/libdevice-fake-tod-ssm-test-v1+1.94.3-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.94.3/libdevice-fake-tod-ssm-test-v1+1.94.3-x86_64.so
+old mode 100755
+new mode 100644
+diff --git a/tests/tod-drivers/tod-x86_64-v1+1.94.3/libdevice-fake-tod-test-driver-v1+1.94.3-x86_64.so b/tests/tod-drivers/tod-x86_64-v1+1.94.3/libdevice-fake-tod-test-driver-v1+1.94.3-x86_64.so
+old mode 100755
+new mode 100644

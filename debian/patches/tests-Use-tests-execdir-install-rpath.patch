@@ -1,0 +1,20 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Mon, 21 Aug 2023 12:22:07 +0200
+Subject: tests: Use tests execdir install rpath
+
+---
+ tests/meson.build | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/tests/meson.build b/tests/meson.build
+index 2832158..e95c1cf 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -396,6 +396,7 @@ if get_option('tod')
+         dependencies: deps,
+         install: installed_tests,
+         install_dir: installed_tests_execdir / 'tod-drivers' / 'current',
++        install_rpath: installed_tests_execdir,
+     )
+ 
+     fp_todv1_enums = gnome.mkenums_simple('fp-todv1-enums',

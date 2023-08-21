@@ -1,2 +1,4 @@
 tests-Install-current-TOD-driver-in-installed-tests-and-u.patch
 tests-Use-native-GTest-utils-to-generate-assets-names.patch
+tests-Use-tests-execdir-install-rpath.patch
+tests-Remove-executable-bits-from-installed-libraries.patch
