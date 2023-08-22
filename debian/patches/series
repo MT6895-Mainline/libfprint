@@ -1,1 +1,2 @@
 tests-Use-native-GTest-utils-to-generate-assets-names.patch
+tests-egis0570-capture.pcapng-Remove-execution-permission.patch
