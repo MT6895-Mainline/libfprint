@@ -1,4 +1,4 @@
-libfprint (1:1.94.6-1) UNRELEASED; urgency=medium
+libfprint (1:1.94.6-1) unstable; urgency=medium
 
   * New upstream release
   * debian/libfprint-2-2.postinst: Devices triggers updated
@@ -9,7 +9,7 @@ libfprint (1:1.94.6-1) UNRELEASED; urgency=medium
   * fixup! debian/patches: Use assets from correct paths
   * debian/patches: Remove execution bit from test asset
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 23 Aug 2023 01:10:57 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 23 Aug 2023 01:11:51 +0200
 
 libfprint (1:1.94.5-1) unstable; urgency=medium
 
