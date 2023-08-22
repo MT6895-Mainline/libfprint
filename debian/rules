@@ -6,6 +6,7 @@ BUILDDIR = $(CURDIR)/obj-$(DEB_HOST_GNU_TYPE)
 
 # Configuration arguments
 CONFIG_ARGS = \
+	-Dudev_hwdb=enabled \
 	-Dudev_hwdb_dir=/lib/udev/hwdb.d \
 	-Dudev_rules_dir=/lib/udev/rules.d \
 	-Ddrivers=all \
