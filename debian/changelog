@@ -2,8 +2,14 @@ libfprint (1:1.94.6-1) UNRELEASED; urgency=medium
 
   * New upstream release
   * debian/libfprint-2-2.postinst: Devices triggers updated
+  * debian/patches: Drop, applied upstream
+  * debian: Add libfprint-2-tests package
+  * debian/patches: Use assets from correct paths
+  * debian/rules: Always force building udev hwdb (Closes: #1024309)
+  * fixup! debian/patches: Use assets from correct paths
+  * debian/patches: Remove execution bit from test asset
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 23 Aug 2023 00:43:40 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 23 Aug 2023 01:10:57 +0200
 
 libfprint (1:1.94.5-1) unstable; urgency=medium
 
