@@ -1,0 +1,13 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Wed, 23 Aug 2023 01:04:33 +0200
+Subject: tests/egis0570/capture.pcapng: Remove execution permission
+
+Origin: https://gitlab.freedesktop.org/libfprint/libfprint/-/merge_requests/445
+---
+ tests/egis0570/capture.pcapng | Bin
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ mode change 100755 => 100644 tests/egis0570/capture.pcapng
+
+diff --git a/tests/egis0570/capture.pcapng b/tests/egis0570/capture.pcapng
+old mode 100755
+new mode 100644

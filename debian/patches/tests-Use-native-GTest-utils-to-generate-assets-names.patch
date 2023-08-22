@@ -2,13 +2,14 @@ From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
 Date: Thu, 17 Aug 2023 21:17:26 +0200
 Subject: tests: Use native GTest utils to generate assets names
 
+Origin: https://gitlab.freedesktop.org/libfprint/libfprint/-/commit/1372d6f08
 ---
  tests/meson.build           | 14 +++++++++-----
  tests/test-fpi-assembling.c |  4 +---
  2 files changed, 10 insertions(+), 8 deletions(-)
 
 diff --git a/tests/meson.build b/tests/meson.build
-index 5058ae3..2832158 100644
+index fe87ef0..1eb2b4b 100644
 --- a/tests/meson.build
 +++ b/tests/meson.build
 @@ -6,6 +6,8 @@ envs.set('G_MESSAGES_DEBUG', 'all')
@@ -33,7 +34,7 @@ index 5058ae3..2832158 100644
  if get_option('introspection')
      envs.prepend('GI_TYPELIB_PATH', meson.project_build_root() / 'libfprint')
      virtual_devices_tests = [
-@@ -247,10 +255,6 @@ endif
+@@ -246,10 +254,6 @@ endif
  
  unit_tests_deps = { 'fpi-assembling' : [cairo_dep] }
  
@@ -44,7 +45,7 @@ index 5058ae3..2832158 100644
  foreach test_name: unit_tests
      if unit_tests_deps.has_key(test_name)
          missing_deps = false
-@@ -278,7 +282,7 @@ foreach test_name: unit_tests
+@@ -277,7 +281,7 @@ foreach test_name: unit_tests
  
      basename = 'test-' + test_name
      test_exe = executable(basename,

@@ -19,6 +19,19 @@ libfprint (1:1.94.6+tod1-0ubuntu1) mantic; urgency=medium
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 17 Aug 2023 21:53:59 +0200
 
+libfprint (1:1.94.6-1) unstable; urgency=medium
+
+  * New upstream release
+  * debian/libfprint-2-2.postinst: Devices triggers updated
+  * debian/patches: Drop, applied upstream
+  * debian: Add libfprint-2-tests package
+  * debian/patches: Use assets from correct paths
+  * debian/rules: Always force building udev hwdb (Closes: #1024309)
+  * fixup! debian/patches: Use assets from correct paths
+  * debian/patches: Remove execution bit from test asset
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 23 Aug 2023 01:11:51 +0200
+
 libfprint (1:1.94.5+tod1-0ubuntu2) lunar; urgency=medium
 
   * debian/patches/git_tests_fix.patch:
@@ -38,6 +51,23 @@ libfprint (1:1.94.5+tod1-0ubuntu1) kinetic; urgency=medium
   * debian/source: Remove include-binaries file, we've none now
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 14 Oct 2022 00:18:27 +0200
+
+libfprint (1:1.94.5-1) unstable; urgency=medium
+
+  * New upstream release:
+     - New driver: fpcmoc, supporting various FPC MOC Fingerprint Sensors
+     - goodixmoc:
+       + New PIDs 0x6014, 0x6094, 0x631C, 0x634C, 0x6384, 0x659A.
+       + Support resetting device on firmware failure due to corrupted DB.
+     - elanmoc: New PIDs 0x0c88, 0x0c8c, 0x0c8d.
+     - synaptics: New PID 0x0104.
+     - upektc: New PID 0x2017.
+     - Fixed various memory leaks
+  * debian/libfprint-2-2.postinst: Devices triggers updated
+  * debian/patches: Cherry-pick post-release upstream cleanups
+  * debian/docs: Update reference to README.md and remove TODO
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 14 Oct 2022 01:09:06 +0200
 
 libfprint (1:1.94.3+tod1-0ubuntu3) kinetic; urgency=medium
 
@@ -72,6 +102,19 @@ libfprint (1:1.94.2+tod1-0ubuntu1) jammy; urgency=medium
   * debian/patches: Drop, all applied upstream
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 14 Dec 2021 19:57:05 +0100
+
+libfprint (1:1.94.2-1) unstable; urgency=medium
+
+  * New upstream release
+  * debian/libfprint-2-2.postinst: Devices triggers updated
+  * debian/libfprint-2-*.install: Use more restrictive rules to reduce ubuntu
+    delta
+  * debian/update-udev-triggers: Ignore errors on udevadm trigger.
+    These are not fatal for package installation and rebuild postinst script
+  * debian/watch: Use @PACKAGE@
+  * debian/patches: Drop, all applied upstream
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 03 Nov 2021 17:39:27 +0100
 
 libfprint (1:1.94.1+tod1-0ubuntu2) jammy; urgency=medium
 
@@ -631,7 +674,7 @@ libfprint (1:0.5.0-6) unstable; urgency=low
 
   [ Jeremy Bicha ]
   * Fix underlinking against glib - thanks to Julian Taylor
-   (Closes: #710381, #713466) 
+   (Closes: #710381, #713466)
 
   [ Didier Raboud ]
   * Run udevadm trigger on 147e:2020 too
@@ -739,8 +782,8 @@ libfprint (20110418git-1) unstable; urgency=low
   * New upstream release.
   * Removing resigned uploader from the Uploaders filed (Closes: #595719).
   * Cleaning out 'dependency_libs' for multiarch support (Closes: #620447).
-  * Added libnss as build-depend for uru4000.  
-  * Added Validity VFS101 device support. 
+  * Added libnss as build-depend for uru4000.
+  * Added Validity VFS101 device support.
   * Bump Standard-version up to 3.9.2.0 (no changes needed).
 
  -- Ulises Vitulli <dererk@debian.org>  Tue, 19 Apr 2011 14:58:27 -0300
@@ -748,7 +791,7 @@ libfprint (20110418git-1) unstable; urgency=low
 libfprint (20100820git-1) unstable; urgency=low
 
   * New upstream snapshot.
-  * Remove local patches, reported and applied on upstream side, 
+  * Remove local patches, reported and applied on upstream side,
     thanks BastienNocera:
     - Check-return-code-from-img2print-conversion.patch.
     - Add-some-corrective-action-if-there-are-missing-pack.patch.

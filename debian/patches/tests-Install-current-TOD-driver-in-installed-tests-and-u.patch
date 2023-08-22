@@ -7,10 +7,10 @@ Subject: tests: Install current TOD driver in installed tests and use it
  1 file changed, 9 insertions(+), 4 deletions(-)
 
 diff --git a/tests/meson.build b/tests/meson.build
-index fe87ef0..5058ae3 100644
+index 1eb2b4b..2832158 100644
 --- a/tests/meson.build
 +++ b/tests/meson.build
-@@ -131,6 +131,7 @@ if get_option('introspection')
+@@ -139,6 +139,7 @@ if get_option('introspection')
                              'LD_LIBRARY_PATH=' + installed_tests_libdir,
                              'FP_PRINTS_PATH=' + installed_tests_testdir / 'prints',
                              # FIXME: Adding this requires gnome-desktop-testing!12
@@ -18,7 +18,7 @@ index fe87ef0..5058ae3 100644
                          ]),
                          'extra_content': '',
                      },
-@@ -389,7 +390,8 @@ if get_option('tod')
+@@ -393,7 +394,8 @@ if get_option('tod')
          ],
          include_directories: include_directories('../libfprint'),
          dependencies: deps,
@@ -28,7 +28,7 @@ index fe87ef0..5058ae3 100644
      )
  
      fp_todv1_enums = gnome.mkenums_simple('fp-todv1-enums',
-@@ -494,8 +496,10 @@ if get_option('tod')
+@@ -498,8 +500,10 @@ if get_option('tod')
              endif
              tod_test_envs = tod_envs
              tod_test_envs.prepend('FP_DRIVERS_WHITELIST', tod_driver)
@@ -41,7 +41,7 @@ index fe87ef0..5058ae3 100644
              tod_test_envs.set('FP_TOD_TEST_DRIVER_NAME', tod_driver)
  
              test(tod_test_name + '-' + tod_driver,
-@@ -520,7 +524,8 @@ if get_option('tod')
+@@ -524,7 +528,8 @@ if get_option('tod')
                          'env': ' '.join([
                              tod_envs_str,
                              'FP_TOD_DRIVERS_DIR=' + installed_tests_execdir /
