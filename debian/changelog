@@ -6,7 +6,6 @@ libfprint (1:1.94.6-1) unstable; urgency=medium
   * debian: Add libfprint-2-tests package
   * debian/patches: Use assets from correct paths
   * debian/rules: Always force building udev hwdb (Closes: #1024309)
-  * fixup! debian/patches: Use assets from correct paths
   * debian/patches: Remove execution bit from test asset
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 23 Aug 2023 01:11:51 +0200
