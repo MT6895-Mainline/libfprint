@@ -1,11 +1,11 @@
-libfprint (1:1.94.6+tod1-0ubuntu2) UNRELEASED; urgency=medium
+libfprint (1:1.94.6+tod1-0ubuntu2) mantic; urgency=medium
 
   * debian/control: Add explicit tests dependency on python3
   * debian/patches: Use proper rpath and permissions on installed libraries
   * debian/intian-overrides: Update lintian syntax to ignore built drivers
   * debian/rules: Always force building udev hwdb
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 23 Aug 2023 00:31:44 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 23 Aug 2023 00:31:57 +0200
 
 libfprint (1:1.94.6+tod1-0ubuntu1) mantic; urgency=medium
 
