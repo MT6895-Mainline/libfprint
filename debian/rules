@@ -20,3 +20,7 @@ override_dh_auto_configure:
 
 override_dh_auto_test:
 	dh_auto_test -- -C $(BUILDDIR) --timeout-multiplier 5
+
+override_dh_auto_clean:
+	rm -rf tests/__pycache__
+	dh_auto_clean
