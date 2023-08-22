@@ -1,3 +1,9 @@
+libfprint (1:1.94.6-1) UNRELEASED; urgency=medium
+
+  * New upstream release
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 23 Aug 2023 00:43:40 +0200
+
 libfprint (1:1.94.5-1) unstable; urgency=medium
 
   * New upstream release:
