@@ -1,3 +1,23 @@
+libfprint (1:1.94.6+tod1-0ubuntu3) UNRELEASED; urgency=medium
+
+  [ Marco Trevisan (Treviño) ]
+  * Update changelog
+  * Merge with debian changes
+  * debian/patches: Remove execution bit from test asset
+
+  [ Debian Janitor ]
+  * Apply multi-arch hints. + libfprint-2-2: Drop Multi-Arch: same.
+  * Trim trailing whitespace.
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository-Browse.
+  * Update standards version to 4.6.1, no changes needed.
+  * Remove constraints unnecessary since buster (oldstable)
+
+  [ Andy Chi ]
+  * d/p/synaptics-fix-enroll_identify-problem-after-user-reset-da.patch
+    (LP: #2034481)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 07 Sep 2023 17:40:43 +0200
+
 libfprint (1:1.94.6+tod1-0ubuntu2) mantic; urgency=medium
 
   * debian/control: Add explicit tests dependency on python3
