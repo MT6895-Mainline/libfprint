@@ -1,4 +1,4 @@
-libfprint (1:1.94.6+tod1-0ubuntu3) UNRELEASED; urgency=medium
+libfprint (1:1.94.6+tod1-0ubuntu3) mantic; urgency=medium
 
   [ Marco Trevisan (Treviño) ]
   * Update changelog
@@ -16,7 +16,7 @@ libfprint (1:1.94.6+tod1-0ubuntu3) UNRELEASED; urgency=medium
   * d/p/synaptics-fix-enroll_identify-problem-after-user-reset-da.patch
     (LP: #2034481)
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 07 Sep 2023 17:40:43 +0200
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 07 Sep 2023 17:59:33 +0200
 
 libfprint (1:1.94.6+tod1-0ubuntu2) mantic; urgency=medium
 
