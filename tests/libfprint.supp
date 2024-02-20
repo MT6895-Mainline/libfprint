@@ -24,3 +24,12 @@
    ...
    fun:g_thread_new
 }
+
+{
+   <ignore-bash-leaks>
+   Memcheck:Leak
+   match-leak-kinds: definite
+   fun:malloc
+   ...
+   obj:/usr/bin/bash
+}

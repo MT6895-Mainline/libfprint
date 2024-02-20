@@ -70,6 +70,7 @@ pkgconfig.generate(libfprint_tod,
     subdirs: tod_subpath,
     requires_private: [
         versioned_libname,
+        gusb_dep,
     ],
     variables: [
         'tod_driversdir=${libdir}/@0@'.format(tod_subpath)
