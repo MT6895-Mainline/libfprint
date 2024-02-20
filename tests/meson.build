@@ -6,6 +6,8 @@ envs.set('G_MESSAGES_DEBUG', 'all')
 # Setup paths
 envs.set('MESON_SOURCE_ROOT', meson.project_source_root())
 envs.set('MESON_BUILD_ROOT', meson.project_build_root())
+envs.set('G_TEST_SRCDIR', meson.current_source_dir())
+envs.set('G_TEST_BUILDDIR', meson.current_build_dir())
 envs.prepend('LD_LIBRARY_PATH', meson.project_build_root() / 'libfprint')
 
 # Set FP_DEVICE_EMULATION so that drivers can adapt (e.g. to use fixed
@@ -13,7 +15,7 @@ envs.prepend('LD_LIBRARY_PATH', meson.project_build_root() / 'libfprint')
 envs.set('FP_DEVICE_EMULATION', '1')
 
 # Set a colon-separated list of native drivers we enable in tests
-envs.set('FP_DRIVERS_WHITELIST', ':'.join([
+envs.set('FP_DRIVERS_ALLOWLIST', ':'.join([
     'virtual_image',
     'virtual_device',
     'virtual_device_storage',
@@ -49,7 +51,11 @@ drivers_tests = [
     'goodixmoc',
     'nb1010',
     'egis0570',
+    'egismoc',
+    'egismoc-05a1',
     'fpcmoc',
+    'realtek',
+    'focaltech_moc',
 ]
 
 if get_option('introspection')
@@ -71,6 +77,12 @@ envs_str = run_command(python3, '-c', env_parser_cmd,
     env: envs,
     check: installed_tests).stdout().strip()
 
+envs_str = ' '.join([
+    envs_str,
+    'G_TEST_SRCDIR=' + installed_tests_testdir,
+    'G_TEST_BUILDDIR=' + installed_tests_execdir,
+])
+
 if get_option('introspection')
     envs.prepend('GI_TYPELIB_PATH', meson.project_build_root() / 'libfprint')
     virtual_devices_tests = [
@@ -88,11 +100,17 @@ if get_option('introspection')
             base_args = files(vdtest + '.py')
             suite = ['virtual-driver']
 
-            r = run_command(unittest_inspector, files(vdtest + '.py'), check: true)
+            r = run_command(unittest_inspector, files(vdtest + '.py'), check: false)
             unit_tests = r.stdout().strip().split('\n')
 
             if r.returncode() == 0 and unit_tests.length() > 0
                 suite += vdtest
+            elif r.returncode() == 77
+                test(vdtest,
+                    sh,
+                    args: ['-c', 'exit 77']
+                )
+                continue
             else
                 unit_tests = [vdtest]
             endif
@@ -131,6 +149,7 @@ if get_option('introspection')
                             'LD_LIBRARY_PATH=' + installed_tests_libdir,
                             'FP_PRINTS_PATH=' + installed_tests_testdir / 'prints',
                             # FIXME: Adding this requires gnome-desktop-testing!12
+                            # 'GI_TYPELIB_PATH=' + installed_tests_libdir / 'girepository-1.0',
                         ]),
                         'extra_content': '',
                     },
@@ -138,7 +157,7 @@ if get_option('introspection')
             endif
         else
             test(vdtest,
-                find_program('sh'),
+                sh,
                 args: ['-c', 'exit 77']
             )
         endif
@@ -148,7 +167,7 @@ if get_option('introspection')
     foreach driver_test: drivers_tests
         driver_name = driver_test.split('-')[0]
         driver_envs = envs
-        driver_envs.set('FP_DRIVERS_WHITELIST', driver_name)
+        driver_envs.set('FP_DRIVERS_ALLOWLIST', driver_name)
 
         if (driver_name in supported_drivers and
             gusb_dep.version().version_compare('>= 0.3.0'))
@@ -192,7 +211,7 @@ if get_option('introspection')
             endif
         else
             test(driver_test,
-                find_program('sh'),
+                sh,
                 args: ['-c', 'exit 77']
             )
         endif
@@ -211,13 +230,13 @@ if get_option('introspection')
 else
     warning('Skipping all driver tests as introspection bindings are missing')
     test('virtual-image',
-        find_program('sh'),
+        sh,
         args: ['-c', 'exit 77']
     )
 
     foreach driver_test: drivers_tests
         test(driver_test,
-            find_program('sh'),
+            sh,
             args: ['-c', 'exit 77']
         )
     endforeach
@@ -246,10 +265,6 @@ endif
 
 unit_tests_deps = { 'fpi-assembling' : [cairo_dep] }
 
-test_config = configuration_data()
-test_config.set_quoted('SOURCE_ROOT', meson.project_source_root())
-test_config_h = configure_file(output: 'test-config.h', configuration: test_config)
-
 foreach test_name: unit_tests
     if unit_tests_deps.has_key(test_name)
         missing_deps = false
@@ -264,7 +279,7 @@ foreach test_name: unit_tests
             # Create a dummy test that always skips instead
             warning('Test @0@ cannot be compiled due to missing dependencies'.format(test_name))
             test(test_name,
-                find_program('sh'),
+                sh,
                 suite: ['unit-tests'],
                 args: ['-c', 'exit 77'],
             )
@@ -277,7 +292,7 @@ foreach test_name: unit_tests
 
     basename = 'test-' + test_name
     test_exe = executable(basename,
-        sources: [basename + '.c', test_config_h],
+        sources: basename + '.c',
         dependencies: [ libfprint_private_dep ] + extra_deps,
         c_args: common_cflags,
         link_whole: test_utils,
@@ -330,7 +345,7 @@ endif
 
 valgrind = find_program('valgrind', required: false)
 if valgrind.found()
-    glib_share = glib_dep.get_pkgconfig_variable('prefix') / 'share' / glib_dep.name()
+    glib_share = glib_dep.get_variable(pkgconfig: 'prefix') / 'share' / glib_dep.name()
     glib_suppressions = glib_share + '/valgrind/glib.supp'
     libfprint_suppressions = '@0@/@1@'.format(meson.project_source_root(),
         files('libfprint.supp')[0])
@@ -389,7 +404,9 @@ if get_option('tod')
         ],
         include_directories: include_directories('../libfprint'),
         dependencies: deps,
-        install: false
+        install: installed_tests,
+        install_dir: installed_tests_execdir / 'tod-drivers' / 'current',
+        install_rpath: installed_tests_execdir,
     )
 
     fp_todv1_enums = gnome.mkenums_simple('fp-todv1-enums',
@@ -438,8 +455,9 @@ if get_option('tod')
             'v1+1.90.2',
             'v1+1.90.3',
             'v1+1.90.5',
-            'v1+1.94.0',
+            'v1+1.94.1',
             'v1+1.94.3',
+            'v1+1.94.7',
         ]
 
         foreach tod_version: tod_test_versions
@@ -493,9 +511,11 @@ if get_option('tod')
                 continue
             endif
             tod_test_envs = tod_envs
-            tod_test_envs.prepend('FP_DRIVERS_WHITELIST', tod_driver)
-            tod_test_envs.set('FP_TOD_DRIVERS_DIR', meson.current_source_dir() /
-                tod_driver_info.get('tod-dir'))
+            tod_test_envs.prepend('FP_DRIVERS_ALLOWLIST', tod_driver)
+            tod_test_envs.set('FP_TOD_DRIVERS_DIR',
+                tod_driver_info.get('tod-dir') == meson.current_build_dir() ?
+                meson.current_build_dir() :
+                meson.current_source_dir() / tod_driver_info.get('tod-dir'))
             tod_test_envs.set('FP_TOD_TEST_DRIVER_NAME', tod_driver)
 
             test(tod_test_name + '-' + tod_driver,
@@ -520,7 +540,8 @@ if get_option('tod')
                         'env': ' '.join([
                             tod_envs_str,
                             'FP_TOD_DRIVERS_DIR=' + installed_tests_execdir /
-                                tod_driver_info.get('tod-dir'),
+                                (tod_driver_info.get('tod-dir') == meson.current_build_dir() ?
+                                'tod-drivers' / 'current' : tod_driver_info.get('tod-dir')),
                         ]),
                         'extra_content': '',
                     },

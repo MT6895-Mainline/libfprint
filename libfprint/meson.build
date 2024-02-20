@@ -119,6 +119,8 @@ driver_sources = {
         [ 'drivers/etes603.c' ],
     'egis0570' :
         [ 'drivers/egis0570.c' ],
+    'egismoc' :
+        [ 'drivers/egismoc/egismoc.c' ],
     'vfs0050' :
         [ 'drivers/vfs0050.c' ],
     'elan' :
@@ -141,6 +143,10 @@ driver_sources = {
         [ 'drivers/goodixmoc/goodix.c', 'drivers/goodixmoc/goodix_proto.c' ],
     'fpcmoc' :
         [ 'drivers/fpcmoc/fpc.c' ],
+    'realtek' :
+        [ 'drivers/realtek/realtek.c' ],
+    'focaltech_moc' :
+        [ 'drivers/focaltech_moc/focaltech_moc.c' ],
 }
 
 helper_sources = {

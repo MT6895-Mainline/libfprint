@@ -25,6 +25,7 @@
 
 /**
  * FpiImageFlags:
+ * @FPI_IMAGE_NONE: no flag set
  * @FPI_IMAGE_V_FLIPPED: the image is vertically flipped
  * @FPI_IMAGE_H_FLIPPED: the image is horizontally flipped
  * @FPI_IMAGE_COLORS_INVERTED: the colours are inverted
@@ -34,6 +35,7 @@
  * rely on the image to be normalized by libfprint before further processing.
  */
 typedef enum {
+  FPI_IMAGE_NONE            = 0,
   FPI_IMAGE_V_FLIPPED       = 1 << 0,
   FPI_IMAGE_H_FLIPPED       = 1 << 1,
   FPI_IMAGE_COLORS_INVERTED = 1 << 2,
@@ -68,9 +70,12 @@ struct _FpImage
   guint8    *binarized;
 
   GPtrArray *minutiae;
+  /* Unused */
   guint      ref_count;
 
-  TOD_PADDING (32, 0);
+  gboolean   detection_in_progress;
+
+  TOD_PADDING (32, sizeof (gboolean));
 };
 
 gint fpi_std_sq_dev (const guint8 *buf,
