@@ -2,8 +2,10 @@ libfprint (1:1.94.7-1) UNRELEASED; urgency=medium
 
   * New upstream release
   * debian/libfprint-2-2.postinst: Devices triggers updated
+  * debian/patches: Drop, applied upstream
+  * debian: use udev.pc to place udev rules and hwdb (Closes: #1058843)
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 20 Feb 2024 06:30:08 +0100
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 20 Feb 2024 06:45:31 +0100
 
 libfprint (1:1.94.6-2) unstable; urgency=medium
 
