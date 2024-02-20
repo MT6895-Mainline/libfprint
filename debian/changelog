@@ -1,9 +1,12 @@
-libfprint (1:1.94.7+tod1-1) UNRELEASED; urgency=medium
+libfprint (1:1.94.7+tod1-0ubuntu1) UNRELEASED; urgency=medium
 
   * New upstream release
-  * debian/libfprint-2-2.postinst: Devices triggers updated
+  * Merge packaging bits with debian, remaining changes:
+    - Use tod upstream source
+    - Update reference to tod binaries
+  * debian/upstream/metadata: Update for tod light-fork
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 20 Feb 2024 09:12:17 +0100
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 20 Feb 2024 09:21:47 +0100
 
 libfprint (1:1.94.7-2) unstable; urgency=medium
 
