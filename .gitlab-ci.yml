@@ -22,7 +22,6 @@ variables:
   FDO_DISTRIBUTION_VERSION: rawhide
   FDO_UPSTREAM_REPO: "libfprint/$CI_PROJECT_NAME"
   FEDORA_IMAGE: "$CI_REGISTRY/libfprint/$CI_PROJECT_NAME/fedora/$FDO_DISTRIBUTION_VERSION:$FDO_DISTRIBUTION_TAG"
-  BUNDLE: "org.freedesktop.libfprint.Demo.flatpak"
   LAST_ABI_BREAK: "056ea541ddc97f5806cffbd99a12dc87e4da3546"
 
 workflow:
@@ -125,17 +124,19 @@ test_installed:
   script:
     - meson setup _build --prefix=/usr -Ddrivers=all
     - meson install -C _build
+    - mv _build _build_dir
+    - rm -rf tests
     - gnome-desktop-testing-runner --list libfprint-2
     - gnome-desktop-testing-runner libfprint-2
-        --report-directory=_build/installed-tests-report/failed/
-        --log-directory=_build/installed-tests-report/logs/
+        --report-directory=_installed-tests-report/failed/
+        --log-directory=_installed-tests-report/logs/
         --parallel=0
   artifacts:
     expose_as: 'GNOME Tests Runner logs'
     when: always
     paths:
-      - _build/meson-logs
-      - _build/installed-tests-report
+      - _build_dir/meson-logs
+      - _installed-tests-report
     expire_in: 1 week
 
 
@@ -151,6 +152,7 @@ test_scan_build:
     - SCANBUILD=$CI_PROJECT_DIR/.gitlab-ci/scan-build
       ninja -C _build scan-build
   artifacts:
+    when: on_failure
     paths:
       - _build/meson-logs
     expire_in: 1 week
@@ -176,25 +178,33 @@ test_unsupported_list:
 
 flatpak:
   stage: flatpak
-  extends: .flatpak
-  # From https://gitlab.gnome.org/GNOME/gnome-runtime-images/container_registry
-  image: registry.gitlab.gnome.org/gnome/gnome-runtime-images/gnome:42
+  extends: .flatpak@x86_64
   variables:
     MANIFEST_PATH: "demo/org.freedesktop.libfprint.Demo.json"
     FLATPAK_MODULE: "libfprint"
     APP_ID: "org.freedesktop.libfprint.Demo"
+    BUNDLE: "org.freedesktop.libfprint.Demo.flatpak"
+    RUNTIME_REPO: "https://nightly.gnome.org/gnome-nightly.flatpakrepo"
+  # Build with any builder
+  tags: []
   rules:
     - if: '$CI_PROJECT_PATH != "libfprint/libfprint"'
-      when: never
+      when: manual
+      allow_failure: true
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
     - if: '$CI_COMMIT_BRANCH == "master"'
+      allow_failure: true
       when: always
     - if: '$CI_COMMIT_TAG'
+      allow_failure: true
       when: always
     # For any other (commit), allow manual run.
     # This excludes MRs which would create a duplicate pipeline
     - if: '$CI_COMMIT_BRANCH'
+      when: manual
+      allow_failure: true
+    - if: '$CI_MERGE_REQUEST_ID'
       when: manual
       allow_failure: true
 
