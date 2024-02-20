@@ -1,0 +1,36 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Tue, 20 Feb 2024 08:24:12 +0100
+Subject: build/tests: Skip a test if the test requires it during inspection
+
+In case we don't have dependencies, we should skip the test, otherwise
+we can just fail at test time
+
+Origin: https://gitlab.freedesktop.org/libfprint/libfprint/commit/7dbb21e7
+Forwarded: yes
+---
+ tests/meson.build | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/tests/meson.build b/tests/meson.build
+index 8c8f5d0..dc3b70e 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -100,11 +100,17 @@ if get_option('introspection')
+             base_args = files(vdtest + '.py')
+             suite = ['virtual-driver']
+ 
+-            r = run_command(unittest_inspector, files(vdtest + '.py'), check: true)
++            r = run_command(unittest_inspector, files(vdtest + '.py'), check: false)
+             unit_tests = r.stdout().strip().split('\n')
+ 
+             if r.returncode() == 0 and unit_tests.length() > 0
+                 suite += vdtest
++            elif r.returncode() == 77
++                test(vdtest,
++                    sh,
++                    args: ['-c', 'exit 77']
++                )
++                continue
+             else
+                 unit_tests = [vdtest]
+             endif
