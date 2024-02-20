@@ -1,6 +1,0 @@
-tests-Use-native-GTest-utils-to-generate-assets-names.patch
-tests-egis0570-capture.pcapng-Remove-execution-permission.patch
-tests-Remove-executable-bits-from-installed-libraries.patch
-tests-Install-current-TOD-driver-in-installed-tests-and-u.patch
-tests-Use-tests-execdir-install-rpath.patch
-synaptics-fix-enroll_identify-problem-after-user-reset-da.patch
