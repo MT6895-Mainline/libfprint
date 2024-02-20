@@ -1,5 +1,5 @@
 project('libfprint', [ 'c', 'cpp' ],
-    version: '1.94.6',
+    version: '1.94.7',
     license: 'LGPLv2.1+',
     default_options: [
         'buildtype=debugoptimized',
@@ -21,7 +21,7 @@ datadir = prefix / get_option('datadir')
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
 host_system = host_machine.system()
-glib_min_version = '2.56'
+glib_min_version = '2.68'
 
 glib_version_def = 'GLIB_VERSION_@0@_@1@'.format(
     glib_min_version.split('.')[0], glib_min_version.split('.')[1])
@@ -120,6 +120,7 @@ default_drivers = [
     'vfs0050',
     'etes603',
     'egis0570',
+    'egismoc',
     'vcom5s',
     'synaptics',
     'elan',
@@ -131,6 +132,8 @@ default_drivers = [
     'goodixmoc',
     'nb1010',
     'fpcmoc',
+    'realtek',
+    'focaltech_moc',
 
     # SPI
     'elanspi',
@@ -139,8 +142,27 @@ default_drivers = [
 # FIXME: All the drivers should be fixed by adjusting the byte order.
 # See https://gitlab.freedesktop.org/libfprint/libfprint/-/issues/236
 endian_independent_drivers = virtual_drivers + [
+    'aes1610',
+    'aes1660',
+    'aes2550',
+    'aes2660',
     'aes3500',
+    'aes4000',
+    'egis0570',
+    'egismoc',
+    'elanmoc',
+    'etes603',
+    'focaltech_moc',
+    'nb1010',
+    'realtek',
     'synaptics',
+    'upeksonly',
+    'upektc',
+    'upektc_img',
+    'upekts',
+    'vcom5s',
+    'vfs101',
+    'vfs7552',
 ]
 
 all_drivers = default_drivers + virtual_drivers
@@ -247,7 +269,7 @@ if install_udev_rules
     udev_rules_dir = get_option('udev_rules_dir')
     if udev_rules_dir == 'auto'
         udev_dep = dependency('udev')
-        udev_rules_dir = udev_dep.get_pkgconfig_variable('udevdir') + '/rules.d'
+        udev_rules_dir = udev_dep.get_variable(pkgconfig: 'udevdir') + '/rules.d'
     endif
 endif
 
@@ -284,7 +306,7 @@ if not udev_hwdb.disabled()
 
     if udev_hwdb_dir == 'auto'
         udev_dep = dependency('udev')
-        udev_hwdb_dir = udev_dep.get_pkgconfig_variable('udevdir') + '/hwdb.d'
+        udev_hwdb_dir = udev_dep.get_variable(pkgconfig: 'udevdir') + '/hwdb.d'
     endif
 else
     udev_hwdb_dir = ''

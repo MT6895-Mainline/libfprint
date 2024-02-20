@@ -6,6 +6,8 @@ envs.set('G_MESSAGES_DEBUG', 'all')
 # Setup paths
 envs.set('MESON_SOURCE_ROOT', meson.project_source_root())
 envs.set('MESON_BUILD_ROOT', meson.project_build_root())
+envs.set('G_TEST_SRCDIR', meson.current_source_dir())
+envs.set('G_TEST_BUILDDIR', meson.current_build_dir())
 envs.prepend('LD_LIBRARY_PATH', meson.project_build_root() / 'libfprint')
 
 # Set FP_DEVICE_EMULATION so that drivers can adapt (e.g. to use fixed
@@ -13,7 +15,7 @@ envs.prepend('LD_LIBRARY_PATH', meson.project_build_root() / 'libfprint')
 envs.set('FP_DEVICE_EMULATION', '1')
 
 # Set a colon-separated list of native drivers we enable in tests
-envs.set('FP_DRIVERS_WHITELIST', ':'.join([
+envs.set('FP_DRIVERS_ALLOWLIST', ':'.join([
     'virtual_image',
     'virtual_device',
     'virtual_device_storage',
@@ -49,7 +51,11 @@ drivers_tests = [
     'goodixmoc',
     'nb1010',
     'egis0570',
+    'egismoc',
+    'egismoc-05a1',
     'fpcmoc',
+    'realtek',
+    'focaltech_moc',
 ]
 
 if get_option('introspection')
@@ -70,6 +76,12 @@ print(" ".join([f"{k}={v}" for k, v in os.environ.items()
 envs_str = run_command(python3, '-c', env_parser_cmd,
     env: envs,
     check: installed_tests).stdout().strip()
+
+envs_str = ' '.join([
+    envs_str,
+    'G_TEST_SRCDIR=' + installed_tests_testdir,
+    'G_TEST_BUILDDIR=' + installed_tests_execdir,
+])
 
 if get_option('introspection')
     envs.prepend('GI_TYPELIB_PATH', meson.project_build_root() / 'libfprint')
@@ -149,7 +161,7 @@ if get_option('introspection')
     foreach driver_test: drivers_tests
         driver_name = driver_test.split('-')[0]
         driver_envs = envs
-        driver_envs.set('FP_DRIVERS_WHITELIST', driver_name)
+        driver_envs.set('FP_DRIVERS_ALLOWLIST', driver_name)
 
         if (driver_name in supported_drivers and
             gusb_dep.version().version_compare('>= 0.3.0'))
@@ -247,10 +259,6 @@ endif
 
 unit_tests_deps = { 'fpi-assembling' : [cairo_dep] }
 
-test_config = configuration_data()
-test_config.set_quoted('SOURCE_ROOT', meson.project_source_root())
-test_config_h = configure_file(output: 'test-config.h', configuration: test_config)
-
 foreach test_name: unit_tests
     if unit_tests_deps.has_key(test_name)
         missing_deps = false
@@ -278,7 +286,7 @@ foreach test_name: unit_tests
 
     basename = 'test-' + test_name
     test_exe = executable(basename,
-        sources: [basename + '.c', test_config_h],
+        sources: basename + '.c',
         dependencies: [ libfprint_private_dep ] + extra_deps,
         c_args: common_cflags,
         link_whole: test_utils,
@@ -331,7 +339,7 @@ endif
 
 valgrind = find_program('valgrind', required: false)
 if valgrind.found()
-    glib_share = glib_dep.get_pkgconfig_variable('prefix') / 'share' / glib_dep.name()
+    glib_share = glib_dep.get_variable(pkgconfig: 'prefix') / 'share' / glib_dep.name()
     glib_suppressions = glib_share + '/valgrind/glib.supp'
     libfprint_suppressions = '@0@/@1@'.format(meson.project_source_root(),
         files('libfprint.supp')[0])
