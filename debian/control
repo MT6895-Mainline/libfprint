@@ -18,6 +18,7 @@ Build-Depends: debhelper-compat (= 13),
                python3 <!nocheck>,
                python3-cairo <!nocheck>,
                python3-gi <!nocheck>,
+               systemd-dev,
                umockdev <!nocheck>
 Build-Depends-Indep: libglib2.0-doc <!nodoc>, libgusb-doc <!nodoc>
 Standards-Version: 4.6.2
