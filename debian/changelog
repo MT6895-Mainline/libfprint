@@ -1,3 +1,11 @@
+libfprint (1:1.94.7+tod1-0ubuntu5~24.04.1) UNRELEASED; urgency=medium
+
+  * d/p: Add new Broadcom device IDs to reduce the power consumption
+    (LP: #2067785)
+  * debian: Prepare for noble branching
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 14 Jun 2024 04:49:38 +0200
+
 libfprint (1:1.94.7+tod1-0ubuntu4) noble; urgency=medium
 
   * No-change rebuild for CVE-2024-3094
