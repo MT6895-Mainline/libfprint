@@ -1,3 +1,9 @@
+libfprint (1:1.94.7+tod1-0ubuntu5~24.04.2) noble; urgency=medium
+
+  * debian/patches: Add new Elan device 04f3:0c9f (LP: #2089367)
+
+ -- Yao Wei (魏銘廷) <yao.wei@canonical.com>  Fri, 22 Nov 2024 16:31:36 +0800
+
 libfprint (1:1.94.7+tod1-0ubuntu5~24.04.1) noble; urgency=medium
 
   * d/p: Add new Broadcom device IDs to reduce the power consumption

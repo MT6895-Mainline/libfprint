@@ -1,0 +1,28 @@
+Subject: elanmoc: Add new PID 0x0C9F
+Origin: upstream, https://gitlab.freedesktop.org/libfprint/libfprint/-/merge_requests/501
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/libfprint/+bug/2089367
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index 8e0e6eab12e772058a8957a2b9f2d39e0bdc8e11..342c6d0e6538028d90a11d1607cd9e07086aeb8c 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -156,6 +156,7 @@ usb:v04F3p0C88*
+ usb:v04F3p0C8C*
+ usb:v04F3p0C8D*
+ usb:v04F3p0C99*
++usb:v04F3p0C9F*
+  ID_AUTOSUSPEND=1
+  ID_PERSIST=0
+ 
+diff --git a/libfprint/drivers/elanmoc/elanmoc.c b/libfprint/drivers/elanmoc/elanmoc.c
+index e86b79a28ec2240a303ad602b567d10447e3b09b..42a84a627e68020bb070bce1a6cffa669cffe9ed 100644
+--- a/libfprint/drivers/elanmoc/elanmoc.c
++++ b/libfprint/drivers/elanmoc/elanmoc.c
+@@ -32,6 +32,7 @@ static const FpIdEntry id_table[] = {
+   { .vid = 0x04f3,  .pid = 0x0c8c,  },
+   { .vid = 0x04f3,  .pid = 0x0c8d,  },
+   { .vid = 0x04f3,  .pid = 0x0c99,  },
++  { .vid = 0x04f3,  .pid = 0x0c9f,  },
+   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */
+ };
+ 
