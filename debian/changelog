@@ -1,3 +1,9 @@
+libfprint (1:1.94.7+tod1-0ubuntu5~24.04.3) noble; urgency=medium
+
+  * d/p: Add new Synaptics devices 06cb:0107 and 06cb:0108 (LP: #2097831)
+
+ -- Dirk Su <dirk.su@canonical.com>  Thu, 13 Feb 2025 14:52:39 +0800
+
 libfprint (1:1.94.7+tod1-0ubuntu5~24.04.2) noble; urgency=medium
 
   * debian/patches: Add new Elan device 04f3:0c9f (LP: #2089367)
