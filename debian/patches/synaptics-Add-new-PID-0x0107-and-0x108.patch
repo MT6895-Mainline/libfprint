@@ -1,0 +1,39 @@
+From a8ef1672a4ca7e60760349ce320a8f5b778244d5 Mon Sep 17 00:00:00 2001
+From: Aris Lin <aris.lin@synaptics.com>
+Date: Mon, 18 Nov 2024 11:18:29 +0800
+Subject: [PATCH] synaptics: Add new PID 0x0107 and 0x108
+
+---
+ data/autosuspend.hwdb                   | 2 ++
+ libfprint/drivers/synaptics/synaptics.c | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index 74ac65b..386d8bd 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -229,6 +229,8 @@ usb:v06CBp00C2*
+ usb:v06CBp0100*
+ usb:v06CBp00F0*
+ usb:v06CBp0103*
++usb:v06CBp0107*
++usb:v06CBp0108*
+ usb:v06CBp0123*
+ usb:v06CBp0124*
+ usb:v06CBp0126*
+diff --git a/libfprint/drivers/synaptics/synaptics.c b/libfprint/drivers/synaptics/synaptics.c
+index 138e734..a5d2990 100644
+--- a/libfprint/drivers/synaptics/synaptics.c
++++ b/libfprint/drivers/synaptics/synaptics.c
+@@ -39,6 +39,8 @@ static const FpIdEntry id_table[] = {
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0100,  },
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x00F0,  },
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0103,  },
++  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0107,  },
++  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0108,  },
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0123,  },
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0124,  },
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0126,  },
+-- 
+2.43.0
+
