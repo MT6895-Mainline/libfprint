@@ -1,9 +1,9 @@
-libfprint (1:1.94.7+tod1-0ubuntu5~24.04.3) UNRELEASED; urgency=medium
+libfprint (1:1.94.7+tod1-0ubuntu5~24.04.3) noble; urgency=medium
 
   [ Dirk Su ]
   * d/p: Add new Synaptics devices 06cb:0107 and 06cb:0108 (LP: #2097831)
 
- -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 10 Mar 2025 16:51:06 +0100
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 10 Mar 2025 16:54:46 +0100
 
 libfprint (1:1.94.7+tod1-0ubuntu5~24.04.2) noble; urgency=medium
 
