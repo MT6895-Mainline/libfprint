@@ -1,0 +1,40 @@
+From 2e766904f0250873aaa2133f5d0e84440843ec8b Mon Sep 17 00:00:00 2001
+From: Aris Lin <aris.lin@synaptics.com>
+Date: Mon, 13 May 2024 16:21:57 +0800
+Subject: [PATCH] synaptics: Add new PID 0x019D
+Origin: upstream, https://gitlab.freedesktop.org/libfprint/libfprint/-/commit/2e766904f0250873aaa2133f5d0e84440843ec8b
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2114712
+Signed-off-by: Atlas Yu <atlas.yu@canonical.com>
+
+---
+ data/autosuspend.hwdb                   | 1 +
+ libfprint/drivers/synaptics/synaptics.c | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index 342c6d0..ef81674 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -243,6 +243,7 @@ usb:v06CBp015F*
+ usb:v06CBp0104*
+ usb:v06CBp0173*
+ usb:v06CBp0106*
++usb:v06CBp019D*
+  ID_AUTOSUSPEND=1
+  ID_PERSIST=0
+
+diff --git a/libfprint/drivers/synaptics/synaptics.c b/libfprint/drivers/synaptics/synaptics.c
+index 138e734..7b7bf73 100644
+--- a/libfprint/drivers/synaptics/synaptics.c
++++ b/libfprint/drivers/synaptics/synaptics.c
+@@ -48,6 +48,7 @@ static const FpIdEntry id_table[] = {
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0104,  },
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0173,  },
+   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0106,  },
++  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x019D,  },
+   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */
+ };
+
+--
+2.43.0
+

@@ -1,3 +1,9 @@
+libfprint (1:1.94.7+tod1-0ubuntu5~24.04.4) noble; urgency=medium
+
+  * d/p: Add new Synaptics device 06cb:019d (LP: #2114712)
+
+ -- Atlas Yu <atlas.yu@canonical.com>  Fri, 16 Jun 2025 16:28:58 +0800
+
 libfprint (1:1.94.7+tod1-0ubuntu5~24.04.3) noble; urgency=medium
 
   [ Dirk Su ]
