@@ -21,6 +21,7 @@ libfprint_private_sources = [
     'fpi-device.c',
     'fpi-image-device.c',
     'fpi-image.c',
+    'fpi-log.c',
     'fpi-print.c',
     'fpi-ssm.c',
     'fpi-usb-transfer.c',
@@ -47,8 +48,8 @@ libfprint_private_headers = [
     'fpi-log.h',
     'fpi-minutiae.h',
     'fpi-print.h',
-    'fpi-usb-transfer.h',
     'fpi-ssm.h',
+    'fpi-usb-transfer.h',
 ] + spi_headers
 
 nbis_sources = [
@@ -143,8 +144,6 @@ driver_sources = {
         [ 'drivers/virtual-device.c' ],
     'virtual_device_storage' :
         [ 'drivers/virtual-device-storage.c' ],
-    'virtual_sdcp' :
-        [ 'drivers/virtual-sdcp.c' ],
     'synaptics' :
         [ 'drivers/synaptics/synaptics.c', 'drivers/synaptics/bmkt_message.c' ],
     'goodixmoc' :
@@ -158,8 +157,6 @@ driver_sources = {
 }
 
 helper_sources = {
-    'sdcp' :
-        [ 'fp-sdcp-device.c', 'fpi-sdcp-device.c' ],
     'aeslib' :
         [ 'drivers/aeslib.c' ],
     'aesx660' :
@@ -167,6 +164,8 @@ helper_sources = {
     'aes3k' :
         [ 'drivers/aes3k.c' ],
     'openssl' :
+        [ ],
+    'sdcp' :
         [ ],
     'udev' :
         [ ],
@@ -183,6 +182,24 @@ foreach helper : driver_helpers
     drivers_sources += helper_sources[helper]
 endforeach
 
+subdir('sdcp')
+if 'sdcp' in driver_helpers
+    libfprint_sources += [
+        'fp-sdcp-device.c',
+    ]
+    libfprint_private_sources += [
+        'fpi-sdcp.c',
+        'fpi-sdcp-device.c',
+        sdcp_truststore_resource_c,
+    ]
+    libfprint_public_headers += [
+        'fp-sdcp-device.h',
+    ]
+    libfprint_private_headers += [
+        'fpi-sdcp.h',
+        'fpi-sdcp-device.h',
+    ]
+endif
 
 fp_enums = gnome.mkenums_simple('fp-enums',
     sources: libfprint_public_headers,
