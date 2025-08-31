@@ -831,7 +831,7 @@ egismoc_enroll_commit_cb (FpDevice *device,
                                          rsp_commit_success_suffix,
                                          rsp_commit_success_suffix_len))
     {
-      g_propagate_error (&error, fpi_device_error_new_msg (FP_DEVICE_ERROR_DATA_INVALID,
+      g_propagate_error (&error, fpi_device_error_new_msg (FP_DEVICE_ERROR_UNTRUSTED,
                                                            "Enrollment was rejected by the device"));
       fpi_ssm_mark_failed (self->task_ssm, error);
       fpi_sdcp_device_enroll_commit_complete (sdcp_device, error);
