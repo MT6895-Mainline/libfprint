@@ -376,10 +376,11 @@ egismoc_finger_on_sensor_cb (FpiUsbTransfer *transfer,
 
   g_return_if_fail (transfer->ssm);
 
-  if (error) {
-    fpi_ssm_mark_failed (transfer->ssm, error);
-    return;
-  }
+  if (error)
+    {
+      fpi_ssm_mark_failed (transfer->ssm, error);
+      return;
+    }
 
   /* finger is "present" when buffer begins with "SIGE" and ends in valid suffix */
   if (memcmp (transfer->buffer, egismoc_read_prefix, 4) == 0 &&
@@ -402,6 +403,7 @@ egismoc_wait_finger_run_state (FpiSsm   *ssm,
                                FpDevice *device)
 {
   FpiDeviceEgisMoc *self = FPI_DEVICE_EGISMOC (device);
+
   g_autoptr(FpiUsbTransfer) transfer = NULL;
 
   switch (fpi_ssm_get_cur_state (ssm))
@@ -418,10 +420,10 @@ egismoc_wait_finger_run_state (FpiSsm   *ssm,
           transfer->short_is_error = FALSE;
 
           fpi_usb_transfer_submit (g_steal_pointer (&transfer),
-                                  EGISMOC_USB_INTERRUPT_TIMEOUT,
-                                  self->interrupt_cancellable,
-                                  egismoc_finger_on_sensor_cb,
-                                  NULL);
+                                   EGISMOC_USB_INTERRUPT_TIMEOUT,
+                                   self->interrupt_cancellable,
+                                   egismoc_finger_on_sensor_cb,
+                                   NULL);
         }
       else
         {
@@ -513,6 +515,7 @@ egismoc_list_run_state (FpiSsm   *ssm,
 {
   FpiDeviceEgisMoc *self = FPI_DEVICE_EGISMOC (device);
   FpSdcpDevice *sdcp_device = FP_SDCP_DEVICE (device);
+
   g_autoptr(GPtrArray) ids = NULL;
 
   switch (fpi_ssm_get_cur_state (ssm))
@@ -853,7 +856,7 @@ egismoc_enroll_commit (FpSdcpDevice *sdcp_device,
   const guint8 *new_id;
   gsize new_id_len = 0;
   gsize payload_len = 0;
-  
+
   fpi_byte_writer_init (&writer);
   if (!fpi_byte_writer_put_data (&writer, cmd_new_print_prefix,
                                  cmd_new_print_prefix_len))
@@ -997,7 +1000,7 @@ egismoc_enroll_starting_cb (FpDevice *device,
                                          rsp_enroll_starting_suffix,
                                          rsp_enroll_starting_suffix_len))
     {
-      fpi_ssm_mark_failed (self->task_ssm, 
+      fpi_ssm_mark_failed (self->task_ssm,
                            fpi_device_error_new_msg (FP_DEVICE_ERROR_PROTO,
                                                      "Invalid response when starting enrollment"));
       return;
@@ -1335,9 +1338,9 @@ egismoc_identify_check_cb (FpDevice *device,
       fpi_sdcp_device_set_identify_data (sdcp_device, g_steal_pointer (&nonce));
 
       /*
-        Normally for SDCP the "Authorized Identity" response should be (id,m)
-        but on egismoc devices there is a prefix, followed by (m,id) (yes, it
-        is backwards), followed by a suffix.
+         Normally for SDCP the "Authorized Identity" response should be (id,m)
+         but on egismoc devices there is a prefix, followed by (m,id) (yes, it
+         is backwards), followed by a suffix.
        */
       identify_print->mac = g_bytes_new (buffer_in
                                          + EGISMOC_IDENTIFY_RESPONSE_PREFIX_SIZE,
@@ -1360,7 +1363,7 @@ egismoc_identify_check_cb (FpDevice *device,
 
   egismoc_exec_cmd (device, cmd_sensor_reset, cmd_sensor_reset_len,
                     NULL, egismoc_identify_complete_cb);
- }
+}
 
 static void
 egismoc_identify_run_state (FpiSsm   *ssm,
@@ -1470,12 +1473,12 @@ egismoc_connect_cb (FpDevice *device,
 
   /* buf len should be at least larger than all required parts (plus a cert) */
   if (length_in <= SDCP_RANDOM_SIZE
-                   + SDCP_PUBLIC_KEY_SIZE
-                   + SDCP_PUBLIC_KEY_SIZE
-                   + SDCP_RANDOM_SIZE
-                   + SDCP_SIGNATURE_SIZE
-                   + SDCP_SIGNATURE_SIZE
-                   + SDCP_MAC_SIZE)
+      + SDCP_PUBLIC_KEY_SIZE
+      + SDCP_PUBLIC_KEY_SIZE
+      + SDCP_RANDOM_SIZE
+      + SDCP_SIGNATURE_SIZE
+      + SDCP_SIGNATURE_SIZE
+      + SDCP_MAC_SIZE)
     {
       fpi_sdcp_device_connect_complete (sdcp_device, NULL, NULL, NULL,
                                         fpi_device_error_new_msg (FP_DEVICE_ERROR_DATA_INVALID,
@@ -1858,7 +1861,7 @@ egismoc_probe (FpDevice *device)
 
   driver_data = fpi_device_get_driver_data (device);
   if (driver_data & EGISMOC_DRIVER_MAX_ENROLL_STAGES_20)
-     self->max_enroll_stages = 20;
+    self->max_enroll_stages = 20;
   else if (driver_data & EGISMOC_DRIVER_MAX_ENROLL_STAGES_15)
     self->max_enroll_stages = 15;
   else
