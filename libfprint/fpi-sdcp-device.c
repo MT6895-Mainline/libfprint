@@ -343,6 +343,7 @@ fpi_sdcp_device_open_complete (FpSdcpDevice *self,
                                GError       *error)
 {
   FpSdcpDeviceClass *cls = FP_SDCP_DEVICE_GET_CLASS (self);
+
   g_autoptr(GBytes) application_secret = NULL;
 
   if (!error)
@@ -482,6 +483,7 @@ fpi_sdcp_device_connect_complete (FpSdcpDevice *self,
 {
   FpSdcpDevicePrivate *priv = fp_sdcp_device_get_instance_private (self);
   FpSdcpDeviceClass *cls = FP_SDCP_DEVICE_GET_CLASS (self);
+
   g_autoptr(GBytes) application_secret = NULL;
   FpiDeviceAction action;
 
@@ -506,8 +508,8 @@ fpi_sdcp_device_connect_complete (FpSdcpDevice *self,
     }
 
   if (!device_random || !claim || !mac ||
-      (!claim->model_certificate || !claim->device_public_key || !claim->firmware_public_key
-       || !claim->firmware_hash || !claim->model_signature || !claim->device_signature))
+      (!claim->model_certificate || !claim->device_public_key || !claim->firmware_public_key ||
+       !claim->firmware_hash || !claim->model_signature || !claim->device_signature))
     {
       fp_dbg ("Driver did not provide all required information to callback; returning error instead.");
       g_clear_pointer (&device_random, g_bytes_unref);
@@ -563,6 +565,7 @@ fpi_sdcp_device_reconnect_complete (FpSdcpDevice *self,
                                     GError       *error)
 {
   FpSdcpDevicePrivate *priv = fp_sdcp_device_get_instance_private (self);
+
   g_autoptr(GBytes) application_secret = NULL;
   FpiDeviceAction action;
 
@@ -687,6 +690,7 @@ fpi_sdcp_device_enroll_commit (FpSdcpDevice *self,
                                GError       *error)
 {
   FpSdcpDeviceClass *cls = FP_SDCP_DEVICE_GET_CLASS (self);
+
   g_autoptr(GBytes) application_secret = NULL;
   GBytes *id = NULL;
   FpPrint *print;
@@ -804,6 +808,7 @@ fpi_sdcp_device_identify_complete (FpSdcpDevice *self,
                                    GError       *error)
 {
   FpSdcpDevicePrivate *priv = fp_sdcp_device_get_instance_private (self);
+
   g_autoptr(GBytes) application_secret = NULL;
   FpPrint *identified_print;
   FpiDeviceAction action;
@@ -822,8 +827,8 @@ fpi_sdcp_device_identify_complete (FpSdcpDevice *self,
     }
 
   /* No error and no valid id/mac provided means that there was no match from the device */
-  if (!id || !mac || g_bytes_get_size (id) != SDCP_ENROLLMENT_ID_SIZE
-      || g_bytes_get_size (mac) != SDCP_MAC_SIZE)
+  if (!id || !mac || g_bytes_get_size (id) != SDCP_ENROLLMENT_ID_SIZE ||
+      g_bytes_get_size (mac) != SDCP_MAC_SIZE)
     {
       g_clear_pointer (&priv->identify_nonce, g_bytes_unref);
       if (action == FPI_DEVICE_ACTION_VERIFY)
@@ -936,7 +941,7 @@ fpi_sdcp_device_get_print_id (FpPrint *print,
       fp_warn ("SDCP print data is not in expected format.");
       return;
     }
-  
+
   g_variant_get (data, "(@ay)", &id_var);
 
   id_data = g_variant_get_fixed_array (id_var, &id_len, sizeof (guint8));

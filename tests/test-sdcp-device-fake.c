@@ -96,6 +96,7 @@ static void
 fpi_sdcp_device_fake_reconnect (FpSdcpDevice *sdcp_device)
 {
   FpiSdcpDeviceFake *fake_device = FPI_SDCP_DEVICE_FAKE (sdcp_device);
+
   g_autoptr(GError) error = NULL;
   g_autoptr(GBytes) random = NULL;
   g_autoptr(GBytes) reconnect_mac = g_bytes_from_hex (reconnect_mac_hex);

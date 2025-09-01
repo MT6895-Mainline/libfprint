@@ -24,13 +24,13 @@
 
 #include "fp-sdcp-device.h"
 
-#define SDCP_PUBLIC_KEY_SIZE          65
-#define SDCP_APPLICATION_SECRET_SIZE  32
-#define SDCP_RANDOM_SIZE              32
-#define SDCP_MAC_SIZE                 32
-#define SDCP_NONCE_SIZE               32
-#define SDCP_ENROLLMENT_ID_SIZE       32
-#define SDCP_SIGNATURE_SIZE           64
+#define SDCP_PUBLIC_KEY_SIZE 65
+#define SDCP_APPLICATION_SECRET_SIZE 32
+#define SDCP_RANDOM_SIZE 32
+#define SDCP_MAC_SIZE 32
+#define SDCP_NONCE_SIZE 32
+#define SDCP_ENROLLMENT_ID_SIZE 32
+#define SDCP_SIGNATURE_SIZE 64
 
 /**
  * FpiSdcpClaim:

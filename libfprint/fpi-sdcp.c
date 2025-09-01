@@ -33,10 +33,10 @@
 #include <openssl/rand.h>
 #include <openssl/x509.h>
 
-#define SDCP_PRIVATE_KEY_SIZE       32
-#define SDCP_KEY_AGREEMENT_SIZE     32
-#define SDCP_MASTER_SECRET_SIZE     32
-#define SDCP_APPLICATION_KEYS_SIZE  64
+#define SDCP_PRIVATE_KEY_SIZE 32
+#define SDCP_KEY_AGREEMENT_SIZE 32
+#define SDCP_MASTER_SECRET_SIZE 32
+#define SDCP_APPLICATION_KEYS_SIZE 64
 
 /******************************************************************************/
 
@@ -44,6 +44,7 @@ static void
 print_openssl_errors (void)
 {
   gulong e = 0;
+
   e = ERR_get_error ();
   while (e != 0)
     {
@@ -61,7 +62,7 @@ print_certificate (X509 *certificate)
   X509_print (bio, certificate);
   BIO_get_mem_ptr (bio, &bio_mem);
   fp_dbg ("SDCP Device reported the following model certificate:\n%.*s\n",
-    (int) bio_mem->length, bio_mem->data);
+          (int) bio_mem->length, bio_mem->data);
   BIO_free (bio);
 }
 
@@ -79,10 +80,10 @@ fpi_sdcp_verify_signature (EVP_PKEY    *pkey,
   EVP_PKEY_CTX *pctx = NULL;
 
   mdctx = EVP_MD_CTX_create ();
-  pctx = EVP_PKEY_CTX_new(pkey, NULL);
-  EVP_MD_CTX_set_pkey_ctx(mdctx, pctx);
+  pctx = EVP_PKEY_CTX_new (pkey, NULL);
+  EVP_MD_CTX_set_pkey_ctx (mdctx, pctx);
 
-  if (!EVP_DigestVerifyInit(mdctx, NULL, EVP_sha256 (), NULL, pkey))
+  if (!EVP_DigestVerifyInit (mdctx, NULL, EVP_sha256 (), NULL, pkey))
     goto out_error;
 
   if (label)
@@ -90,16 +91,20 @@ fpi_sdcp_verify_signature (EVP_PKEY    *pkey,
       goto out_error;
 
   if (data_a)
-    if (!EVP_DigestVerifyUpdate (mdctx,
-                                 g_bytes_get_data (data_a, NULL),
-                                 g_bytes_get_size (data_a)))
-      goto out_error;
+    {
+      if (!EVP_DigestVerifyUpdate (mdctx,
+                                   g_bytes_get_data (data_a, NULL),
+                                   g_bytes_get_size (data_a)))
+        goto out_error;
+    }
 
   if (data_b)
-    if (!EVP_DigestVerifyUpdate (mdctx,
-                                 g_bytes_get_data (data_b, NULL),
-                                 g_bytes_get_size (data_b)))
-      goto out_error;
+    {
+      if (!EVP_DigestVerifyUpdate (mdctx,
+                                   g_bytes_get_data (data_b, NULL),
+                                   g_bytes_get_size (data_b)))
+        goto out_error;
+    }
 
   if (!EVP_DigestVerifyUpdate (mdctx,
                                g_bytes_get_data (signature, NULL),
@@ -128,7 +133,7 @@ static X509_STORE *
 fpi_sdcp_get_truststore (GError **error)
 {
   g_autoptr(GResource) truststore_resource = NULL;
-  const gchar* truststore_resource_path = "/org/freedesktop/fprint/sdcp/truststore/";
+  const gchar *truststore_resource_path = "/org/freedesktop/fprint/sdcp/truststore/";
   char **trustcert_names = NULL;
   gchar *trustcert_path = NULL;
   GBytes *trustcert_gb = NULL;
@@ -217,7 +222,7 @@ out:
 }
 
 static gboolean
-fpi_sdcp_verify_certificate (X509 *certificate,
+fpi_sdcp_verify_certificate (X509    *certificate,
                              GError **error)
 {
   X509_STORE *sdcp_truststore = NULL;
@@ -245,9 +250,9 @@ fpi_sdcp_verify_certificate (X509 *certificate,
 
   /* set X509_V_FLAG_PARTIAL_CHAIN if we want to skip adding all root and intermediate certs */
   /*
-  if (!X509_VERIFY_PARAM_set_flags (param, X509_V_FLAG_PARTIAL_CHAIN))
-    goto out_error;
-  */
+     if (!X509_VERIFY_PARAM_set_flags (param, X509_V_FLAG_PARTIAL_CHAIN))
+     goto out_error;
+   */
 
   if (!X509_STORE_set1_param (sdcp_truststore, param))
     goto out_error;
@@ -438,7 +443,7 @@ fpi_sdcp_get_private_key (EVP_PKEY *pkey,
   BN_clear_free (priv_bn);
 
   res = g_bytes_new_take (priv, priv_len);
-  
+
   return g_steal_pointer (&res);
 
 out_error:
@@ -508,7 +513,7 @@ fpi_sdcp_get_private_pkey (GBytes  *private_key,
     goto out_error;
   public_key_buf = g_malloc0 (SDCP_PUBLIC_KEY_SIZE);
   if (!EC_POINT_point2oct (group, public_key_point, POINT_CONVERSION_UNCOMPRESSED,
-                          public_key_buf, SDCP_PUBLIC_KEY_SIZE, NULL))
+                           public_key_buf, SDCP_PUBLIC_KEY_SIZE, NULL))
     goto out_error;
   EC_POINT_free (public_key_point);
   EC_GROUP_free (group);
@@ -516,17 +521,17 @@ fpi_sdcp_get_private_pkey (GBytes  *private_key,
   /* set up parameters */
 
   param_bld = OSSL_PARAM_BLD_new ();
-  if (!OSSL_PARAM_BLD_push_utf8_string(param_bld, OSSL_PKEY_PARAM_GROUP_NAME,
-                                       SN_X9_62_prime256v1, sizeof (SN_X9_62_prime256v1)))
+  if (!OSSL_PARAM_BLD_push_utf8_string (param_bld, OSSL_PKEY_PARAM_GROUP_NAME,
+                                        SN_X9_62_prime256v1, sizeof (SN_X9_62_prime256v1)))
     goto out_error;
-  if (!OSSL_PARAM_BLD_push_octet_string(param_bld, OSSL_PKEY_PARAM_PUB_KEY,
-                                       public_key_buf, SDCP_PUBLIC_KEY_SIZE))
+  if (!OSSL_PARAM_BLD_push_octet_string (param_bld, OSSL_PKEY_PARAM_PUB_KEY,
+                                         public_key_buf, SDCP_PUBLIC_KEY_SIZE))
     goto out_error;
-  if (!OSSL_PARAM_BLD_push_BN(param_bld, OSSL_PKEY_PARAM_PRIV_KEY, private_key_bn))
+  if (!OSSL_PARAM_BLD_push_BN (param_bld, OSSL_PKEY_PARAM_PRIV_KEY, private_key_bn))
     goto out_error;
-  
+
   params = OSSL_PARAM_BLD_to_param (param_bld);
-  
+
   /* import pkey from params */
   ctx = EVP_PKEY_CTX_new_from_name (NULL, "EC", NULL);
   if (!EVP_PKEY_fromdata_init (ctx))
@@ -573,13 +578,13 @@ fpi_sdcp_get_public_pkey (GBytes  *public_key,
   ctx = EVP_PKEY_CTX_new_from_name (NULL, "EC", NULL);
   if (!ctx)
     goto out_error;
-    
+
   if (!EVP_PKEY_fromdata_init (ctx))
     goto out_error;
 
-  if (!EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY, params))
+  if (!EVP_PKEY_fromdata (ctx, &key, EVP_PKEY_PUBLIC_KEY, params))
     goto out_error;
-  
+
   EVP_PKEY_CTX_free (ctx);
 
   return g_steal_pointer (&key);

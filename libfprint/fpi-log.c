@@ -52,5 +52,6 @@ fp_dbg_hex_dump_gbytes (const gchar *log_domain,
 {
   gsize len = 0;
   const guint8 *buf = g_bytes_get_data (gbytes, &len);
+
   fp_dbg_hex_dump_bytes (log_domain, buf, len);
 }
