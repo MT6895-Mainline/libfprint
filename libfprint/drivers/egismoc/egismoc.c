@@ -362,7 +362,7 @@ egismoc_wait_finger_ssm_done (FpiSsm   *ssm,
   self->wait_finger_ssm = NULL;
   self->wait_finger_start = 0;
 
-  if (error)
+  if (error && g_strcmp0 (error->message, "Operation was cancelled") != 0)
     fpi_device_action_error (device, error);
 }
 
