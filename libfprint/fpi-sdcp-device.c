@@ -277,6 +277,7 @@ void
 fpi_sdcp_device_enroll (FpSdcpDevice *self)
 {
   FpSdcpDeviceClass *cls = FP_SDCP_DEVICE_GET_CLASS (self);
+
   g_autoptr(GBytes) application_secret = NULL;
   FpPrint *print;
 
@@ -298,6 +299,7 @@ fpi_sdcp_device_identify (FpSdcpDevice *self)
 {
   FpSdcpDevicePrivate *priv = fp_sdcp_device_get_instance_private (self);
   FpSdcpDeviceClass *cls = FP_SDCP_DEVICE_GET_CLASS (self);
+
   g_autoptr(GBytes) application_secret = NULL;
   FpiDeviceAction action;
   GError *error = NULL;

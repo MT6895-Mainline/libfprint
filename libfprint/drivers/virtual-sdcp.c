@@ -43,7 +43,7 @@ struct _FpDeviceVirtualSdcp
 {
   FpSdcpDevice parent;
 
-  GPtrArray *print_ids;
+  GPtrArray   *print_ids;
 };
 
 G_DECLARE_FINAL_TYPE (FpDeviceVirtualSdcp, fpi_device_virtual_sdcp, FPI, DEVICE_VIRTUAL_SDCP, FpSdcpDevice)
@@ -105,10 +105,10 @@ dev_identify (FpSdcpDevice *sdcp_device)
   if (self->print_ids->len > 0)
     {
       /*
-      * Pretend that the virtual device identified the first print.
-      * Since we used a pre-generated enrollment_id for it, we can also use the
-      * matching pre-generated test identify data for its identification.
-      */
+       * Pretend that the virtual device identified the first print.
+       * Since we used a pre-generated enrollment_id for it, we can also use the
+       * matching pre-generated test identify data for its identification.
+       */
       identify_nonce = g_bytes_from_hex (identify_nonce_hex);
       enrollment_id = g_bytes_from_hex (enrollment_id_hex);
       fpi_sdcp_device_set_identify_data (sdcp_device, identify_nonce);
