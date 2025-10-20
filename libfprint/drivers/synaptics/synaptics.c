@@ -45,6 +45,8 @@ static const FpIdEntry id_table[] = {
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0106,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0107,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0108,  },
+  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0109,  },
+  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x010A,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0123,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0124,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0126,  },
@@ -55,6 +57,7 @@ static const FpIdEntry id_table[] = {
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0173,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0174,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x019D,  },
+  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x019F,  },
   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */
 };
 
@@ -1252,6 +1255,12 @@ dev_probe (FpDevice *device)
     {
       fpi_device_probe_complete (device, NULL, NULL, error);
       return;
+    }
+
+  if (!g_usb_device_reset (usb_dev, &error))
+    {
+      fp_dbg ("%s g_usb_device_reset failed %s", G_STRFUNC, error->message);
+      goto err_close;
     }
 
   if (!g_usb_device_claim_interface (usb_dev, 0, 0, &error))
