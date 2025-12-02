@@ -1,3 +1,9 @@
+libfprint (1:1.94.7+tod1-0ubuntu5~24.04.5) noble; urgency=medium
+
+  * d/p: synaptics: add new PID 0x019F, 0x0109 and 0x010A. (LP: #2133704)
+
+ -- Bin Li <binli@ubuntu.com>  Tue, 02 Dec 2025 14:51:30 +0800
+
 libfprint (1:1.94.7+tod1-0ubuntu5~24.04.4) noble; urgency=medium
 
   * d/p: Add new Synaptics device 06cb:019d (LP: #2114712)
