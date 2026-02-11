@@ -1,0 +1,37 @@
+From 763b6830006ca88bced7744c219c9a961d1637f4 Mon Sep 17 00:00:00 2001
+From: jialei <jialei@egoodix.com>
+Date: Wed, 29 Oct 2025 14:32:54 +0800
+Subject: [PATCH] goodixmoc:add new PID 0x66A9
+
+---
+ data/autosuspend.hwdb                | 1 +
+ libfprint/drivers/goodixmoc/goodix.c | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/data/autosuspend.hwdb b/data/autosuspend.hwdb
+index 74ac65b..df18494 100644
+--- a/data/autosuspend.hwdb
++++ b/data/autosuspend.hwdb
+@@ -207,6 +207,7 @@ usb:v27C6p6594*
+ usb:v27C6p659A*
+ usb:v27C6p659C*
+ usb:v27C6p6A94*
++usb:v27C6p66A9*
+  ID_AUTOSUSPEND=1
+  ID_PERSIST=0
+ 
+diff --git a/libfprint/drivers/goodixmoc/goodix.c b/libfprint/drivers/goodixmoc/goodix.c
+index 5a3ffac..8aea175 100644
+--- a/libfprint/drivers/goodixmoc/goodix.c
++++ b/libfprint/drivers/goodixmoc/goodix.c
+@@ -1632,6 +1632,7 @@ static const FpIdEntry id_table[] = {
+   { .vid = 0x27c6,  .pid = 0x659A,  },
+   { .vid = 0x27c6,  .pid = 0x659C,  },
+   { .vid = 0x27c6,  .pid = 0x6A94,  },
++  { .vid = 0x27c6,  .pid = 0x66A9,  },
+   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */
+ };
+ 
+-- 
+2.43.0
+
