@@ -1,8 +1,9 @@
-libfprint (1:1.94.7+tod1-0ubuntu5~24.04.6) UNRELEASED; urgency=medium
+libfprint (1:1.94.7+tod1-0ubuntu5~24.04.6) noble; urgency=medium
 
+  [ Dirk Su ]
   * d/p: Add new Goodix device 27c6:66a9 (LP: #2139061)
 
- -- Dirk Su <dirk.su@canonical.com>  Wed, 11 Feb 2026 09:53:22 +0800
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 11 Mar 2026 14:49:58 +0100
 
 libfprint (1:1.94.7+tod1-0ubuntu5~24.04.5) noble; urgency=medium
 
