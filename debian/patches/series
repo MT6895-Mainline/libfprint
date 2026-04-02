@@ -4,3 +4,4 @@ synaptics-Add-new-PID-0x0107-and-0x108.patch
 synaptics-Add-new-PID-0x019D.patch
 synaptics-add-new-PID-0x019F-0x109-and-0x10A.patch
 goodixmoc-add-new-PID-0x66A9.patch
+elanmoc-Add-new-PID-0x0CA8.patch
