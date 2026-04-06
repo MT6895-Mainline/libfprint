@@ -145,7 +145,7 @@ test_installed:
   extends:
     - .standard_job
   script:
-    - meson setup _build --prefix=/usr -Ddrivers=all -Dinstalled-tests=true
+    - meson setup _build --prefix=/usr -Ddrivers=all
     - meson install -C _build
     - mv _build _build_dir
     - rm -rf tests
