@@ -36,6 +36,7 @@ static const FpIdEntry id_table[] = {
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x00C4,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x00C6,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x00DF,  },
+  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x00E9,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x00F0,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x00F9,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x00FC,  },
@@ -53,11 +54,13 @@ static const FpIdEntry id_table[] = {
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0129,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x015F,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0168,  },
+  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0169,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x016C,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0173,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x0174,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x019D,  },
   { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x019F,  },
+  { .vid = SYNAPTICS_VENDOR_ID,  .pid = 0x01A0,  },
   { .vid = 0,  .pid = 0,  .driver_data = 0 },   /* terminating entry */
 };
 
