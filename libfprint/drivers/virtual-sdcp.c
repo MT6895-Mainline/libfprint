@@ -263,6 +263,19 @@ static void
 dev_open (FpSdcpDevice *sdcp_device)
 {
   fp_dbg ("Virtual SDCP device: %s()", G_STRFUNC);
+  FpSdcpDeviceClass *klass = FP_SDCP_DEVICE_GET_CLASS (sdcp_device);
+
+  if (g_strcmp0 (g_getenv ("FP_VIRTUAL_SDCP_NO_RECONNECT"), "1") == 0)
+    {
+      fp_dbg ("Virtual SDCP device: FP_VIRTUAL_SDCP_NO_RECONNECT=1; disabling SDCP reconnect");
+      klass->reconnect = NULL;
+    }
+  else
+    {
+      fp_dbg ("Virtual SDCP device: FP_VIRTUAL_SDCP_NO_RECONNECT!=1; enabling SDCP reconnect");
+      klass->reconnect = dev_reconnect;
+    }
+
   fpi_sdcp_device_open_complete (sdcp_device, NULL);
 }
 
@@ -315,9 +328,7 @@ fpi_device_virtual_sdcp_class_init (FpDeviceVirtualSdcpClass *klass)
 
   sdcp_dev_class->open = dev_open;
   sdcp_dev_class->connect = dev_connect;
-
-  if (!g_getenv ("FP_VIRTUAL_SDCP_NO_RECONNECT"))
-    sdcp_dev_class->reconnect = dev_reconnect;
+  sdcp_dev_class->reconnect = dev_reconnect;
 
   sdcp_dev_class->list = dev_list;
   sdcp_dev_class->enroll = dev_enroll;

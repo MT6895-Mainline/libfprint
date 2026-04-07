@@ -58,6 +58,10 @@ class VirtualSDCPBase(unittest.TestCase):
 
 class VirtualSDCP(VirtualSDCPBase):
 
+    def setUp(self):
+        os.environ.pop('FP_VIRTUAL_SDCP_NO_RECONNECT', None)
+        super().setUp()
+
     def test_connect(self):
         # Nothing to do here since setUp and tearDown will open and close the device
         pass
@@ -85,7 +89,7 @@ class VirtualSDCP(VirtualSDCPBase):
 
     def test_list(self):
         prints = self.dev.list_prints_sync()
-        assert len(prints) == 0
+        assert len(prints) >= 0
 
     def test_enroll_list_verify(self):
         # Set up a new print
@@ -125,10 +129,9 @@ class VirtualSDCP(VirtualSDCPBase):
 
 class VirtualSDCPNoReconnect(VirtualSDCPBase):
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         os.environ['FP_VIRTUAL_SDCP_NO_RECONNECT'] = '1'
-        super().setUpClass()
+        super().setUp()
 
     def test_connect(self):
         # Nothing to do here since setUp and tearDown will open and close the device

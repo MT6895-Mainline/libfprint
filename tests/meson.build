@@ -159,8 +159,6 @@ if get_option('introspection')
                         'extra_content': '',
                     },
                 )
-
-                install_subdir(vdtest, install_dir: installed_tests_testdir)
             endif
         else
             test(vdtest,
