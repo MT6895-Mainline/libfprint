@@ -1,3 +1,10 @@
+libfprint (1:1.94.7+tod1-0ubuntu5~24.04.7) noble; urgency=medium
+
+  [ Dirk Su ]
+  * d/p: Add new Elan device 04f3:0ca8 (LP: #2147084)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 08 Jun 2026 12:11:37 +0200
+
 libfprint (1:1.94.7+tod1-0ubuntu5~24.04.6) noble; urgency=medium
 
   [ Dirk Su ]
