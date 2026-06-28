@@ -186,6 +186,9 @@ typedef enum {
   IDENTIFY_SEND_CANCEL_RESULT,
   IDENTIFY_COMPLETE_SENSOR_RESET,
   IDENTIFY_COMPLETE,
+
+  /* Cleanup states follow */
+  IDENTIFY_CANCEL,
   IDENTIFY_STATES,
 } IdentifyStates;
 
@@ -200,6 +203,9 @@ typedef enum {
   ENROLL_COMMIT,
   ENROLL_COMMIT_SENSOR_RESET,
   ENROLL_COMPLETE,
+
+  /* Cleanup states follow */
+  ENROLL_CANCEL,
   ENROLL_STATES,
 } EnrollStates;
 
