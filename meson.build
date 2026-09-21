@@ -155,6 +155,7 @@ drivers_info = {
     'virtual_image': { 'virtual': true, 'helper': ['virtual'], 'optional': true },
     'virtual_device': { 'virtual': true, 'helper': ['virtual'], 'optional': true },
     'virtual_device_storage': { 'virtual': true, 'helper': ['virtual'], 'optional': true },
+    'fpc1540ta': { 'virtual': true, 'optional': true },
 }
 
 default_drivers = []
